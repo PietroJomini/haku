@@ -12,10 +12,11 @@
     - [x] url
     - [x] index
 - [ ] download
-  - [ ] multithreaded
+  - [x] multithreaded
   - [ ] cloudfare bypass
   - [ ] query ranges
 - [ ] storage
+  - [ ] async follow-up from download
   - [ ] raw
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List
+from PIL import Image
 
 
 @dataclass
@@ -8,6 +9,8 @@ class Page:
 
     url: str
     index: str
+
+    _raw: Optional[Image.Image] = None
 
 
 @dataclass

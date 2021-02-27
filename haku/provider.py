@@ -1,5 +1,6 @@
 from aiohttp.client import ClientSession
 from haku.utils import abstract, eventh
+from haku.downloader import Downloader
 from haku.meta import Chapter, Page
 from bs4 import BeautifulSoup
 from typing import List
@@ -26,6 +27,7 @@ class Provider(eventh.Handler):
     pattern: str
 
     enabled: bool = True
+    downloader: Downloader = Downloader
 
     def __init__(self, url: str):
         self.url = url
