@@ -1,6 +1,6 @@
 from aiohttp.client import ClientSession
+from haku.utils import abstract, eventh
 from haku.meta import Chapter, Page
-from haku.utils import abstract
 from bs4 import BeautifulSoup
 from typing import List
 import aiohttp
@@ -19,7 +19,7 @@ class Helpers():
             return BeautifulSoup(content, 'html.parser')
 
 
-class Provider:
+class Provider(eventh.Handler):
     """Provider default"""
 
     name: str
@@ -43,8 +43,10 @@ class Provider:
 
         async with aiohttp.ClientSession() as session:
 
+            self._d('fetch.chapters')
             chapters_meta = await self.fetch_chapters(self.url, session)
 
+            self._d('fetch.pages')
             pages = await asyncio.gather(*(
                 asyncio.ensure_future(self.fetch_pages(chapter, session))
                 for chapter in chapters_meta
