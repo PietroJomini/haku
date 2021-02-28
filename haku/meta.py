@@ -10,8 +10,6 @@ class Page:
     url: str
     index: str
 
-    _raw: Optional[Image.Image] = None
-
 
 @dataclass
 class Chapter:

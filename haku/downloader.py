@@ -1,83 +1,68 @@
-from typing import List, Optional, Type
-from haku.meta import Chapter, Page
-from haku.fs import write_page
+from haku.meta import Page, Chapter
 from haku.utils import eventh
+from haku.fs import write_page
 from pathlib import Path
+from io import BytesIO
 from PIL import Image
-from copy import copy
 import aiohttp
 import asyncio
-import io
 
 
 class Downloader(eventh.Handler):
     """Downloader defaults"""
 
-    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Page:
-        """Page async worker"""
+    RETRY_ON_CONNECTION_ERROR: bool = True
+    RATE_LIMIT: int = 50
 
-        np = copy(page)
-        async with session.get(np.url) as response:
+    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Image:
+        """Page downloader async worker"""
+
+        async with session.get(page.url) as response:
             raw = await response.read()
-            stream = io.BytesIO(raw)
-            np._raw = Image.open(stream)
-            return np
+            stream = BytesIO(raw)
+            image = Image.open(stream)
+            stream.close()
+            return image
 
-    async def __page(self, session: aiohttp.ClientSession, page: Page, path: Path):
-        """Download and write pages to disk"""
+    async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
+        """Download and write page to disk"""
 
         self._d('page', page)
-        np = await self._page(session, page)
 
-        self._d('page.write', np)
-        write_page(np, path)
+        try:
+            image = await self._page(session, page)
 
-        page._raw.close()
-        del page._raw
+        except aiohttp.ClientError as err:
+            self._d('page.error.aiohttp', page, err)
+            if self.RETRY_ON_CONNECTION_ERROR:
+                return await self.page(session, page, path)
 
-    async def page(self, page: Page, path: Path):
-        """Download a page"""
+        except Exception as err:
+            self._d('page.error.generic', page, err)
 
-        async with aiohttp.ClientSession() as session:
-            await self.__page(session, page, path=path)
+        else:
+            self._d('page.write', page)
+            write_page(page, image, path)
 
-    def page_sync(self, page: Page, path: Path):
-        """Download a page"""
-
-        asyncio.run(self.page(page, path=path))
+        finally:
+            self._d('page.end', page)
 
     async def _chapter(self, session: aiohttp.ClientSession, chapter: Chapter, path: Path):
-        """Chapter async worker"""
+        """Chapter downloader async worker"""
 
-        self.dispatch('chapter', chapter)
-        await asyncio.gather(*(
-            asyncio.ensure_future(self.__page(
-                session, page, path / chapter.title))
-            for page in chapter._pages
-        ))
+        self._d('chapter')
+        new_path = path / f'{chapter.index} {chapter.title}'
+        tasks = (self.page(session, page, new_path) for page in chapter._pages)
 
-    async def chapter(self, chapter: Chapter, path: Path = Path.cwd()):
-        """Download a chapter"""
+        await asyncio.gather(*tasks)
+        self._d('chapter.end')
 
-        async with aiohttp.ClientSession() as session:
-            await self._chapter(session, chapter, path=path)
-
-    def chapter_sync(self, chapter: Chapter, path: Path = Path.cwd()):
-        """Download a chapter"""
-
-        asyncio.run(self.chapter(chapter, path=path))
-
-    async def chapters(self, *chapters: List[Chapter], path: Path = Path.cwd()):
+    async def chapters(self, *chapters: Chapter, path: Path = Path.cwd()):
         """Download a set of chapters"""
 
-        async with aiohttp.ClientSession() as session:
-            await asyncio.gather(*(
-                asyncio.ensure_future(self._chapter(
-                    session, chapter, path=path))
-                for chapter in chapters
-            ))
+        async with asyncio.Semaphore(self.RATE_LIMIT):
+            async with aiohttp.ClientSession() as session:
+                tasks = (self._chapter(session, chapter, path)
+                         for chapter in chapters)
 
-    def chapters_sync(self, *chapters: List[Chapter], path: Path = Path.cwd()):
-        """Download a set of chapters"""
-
-        asyncio.run(self.chapters(*chapters, path=path))
+                await asyncio.gather(*tasks)

@@ -44,9 +44,9 @@ class MangarockDownloader(Downloader):
         async with session.get(page.url) as response:
             raw = await response.read()
             stream = io.BytesIO(decode(raw))
-            page._raw = Image.open(stream)
+            image = Image.open(stream)
             stream.close()
-            return page
+            return image
 
 
 class Mangarock(Provider):

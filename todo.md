@@ -3,6 +3,8 @@
 ## Features
 
 - [x] fetch
+  - [ ] parse title with separate function
+    - [ ] somehow the user should be able to modify it
   - [x] chapters
     - [x] url
     - [x] title
@@ -12,15 +14,22 @@
     - [x] url
     - [x] index
 - [ ] download
-  - [x] multithreaded
-  - [ ] allow provider to limit rate
+  - [x] async
+    - [ ] chunked, k sessions
+    - [ ] parallel, one session
+    - [ ] sequentials, one session
+  - [x] limit rate
+  - [x] allow retry on connection error 
   - [ ] cloudfare bypass
+- [ ] manager
   - [ ] query ranges
 - [ ] storage
   - [x] async follow-up from download
   - [x] raw
     - [ ] custom naming format
-  - [ ] json/yaml global meta
+    - [ ] check number of images in each folder
+    - [ ] json/yaml global meta
+- [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
 - [ ] ui
@@ -35,9 +44,5 @@
 
 - [ ] docs
 - [ ] error handling
+  - [x] connection errors while downloading page
 
-
-
-## Misc
-
-- [ ] investigate connetion errors
