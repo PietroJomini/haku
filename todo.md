@@ -13,6 +13,7 @@
     - [x] index
 - [ ] download
   - [x] multithreaded
+  - [ ] allow provider to limit rate
   - [ ] cloudfare bypass
   - [ ] query ranges
 - [ ] storage
@@ -33,3 +34,10 @@
 ## Code quality
 
 - [ ] docs
+- [ ] error handling
+
+
+
+## Misc
+
+- [ ] investigate connetion errors
