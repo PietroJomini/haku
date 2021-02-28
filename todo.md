@@ -42,7 +42,12 @@
 
 ## Code quality
 
-- [ ] docs
 - [ ] error handling
   - [x] connection errors while downloading page
+
+
+## Misc
+
+- [ ] docs
+- [ ] logo
 
