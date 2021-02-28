@@ -1,6 +1,8 @@
+from typing import List, Optional, Type
 from haku.meta import Chapter, Page
+from haku.fs import write_page
 from haku.utils import eventh
-from typing import List
+from pathlib import Path
 from PIL import Image
 from copy import copy
 import aiohttp
@@ -21,57 +23,61 @@ class Downloader(eventh.Handler):
             np._raw = Image.open(stream)
             return np
 
-    async def __page(self, session: aiohttp.ClientSession, page: Page) -> Page:
-        """Internal passthrought to `self._page`"""
+    async def __page(self, session: aiohttp.ClientSession, page: Page, path: Path):
+        """Download and write pages to disk"""
 
         self._d('page', page)
-        return await self._page(session, page)
+        np = await self._page(session, page)
 
-    async def page(self, page: Page) -> Page:
+        self._d('page.write', np)
+        write_page(np, path)
+
+        page._raw.close()
+        del page._raw
+
+    async def page(self, page: Page, path: Path):
         """Download a page"""
 
         async with aiohttp.ClientSession() as session:
-            return await self.__page(session, page)
+            await self.__page(session, page, path=path)
 
-    def page_sync(self, page: Page) -> Page:
+    def page_sync(self, page: Page, path: Path):
         """Download a page"""
 
-        return asyncio.run(self.page(page))
+        asyncio.run(self.page(page, path=path))
 
-    async def _chapter(self, session: aiohttp.ClientSession, chapter: Chapter) -> Chapter:
+    async def _chapter(self, session: aiohttp.ClientSession, chapter: Chapter, path: Path):
         """Chapter async worker"""
 
-        nc = copy(chapter)
-        self.dispatch('chapter', nc)
-
-        nc._pages = await asyncio.gather(*(
-            asyncio.ensure_future(self.__page(session, page))
-            for page in nc._pages
+        self.dispatch('chapter', chapter)
+        await asyncio.gather(*(
+            asyncio.ensure_future(self.__page(
+                session, page, path / chapter.title))
+            for page in chapter._pages
         ))
 
-        return nc
-
-    async def chapter(self, chapter: Chapter) -> Chapter:
+    async def chapter(self, chapter: Chapter, path: Path = Path.cwd()):
         """Download a chapter"""
 
         async with aiohttp.ClientSession() as session:
-            return await self._chapter(session, chapter)
+            await self._chapter(session, chapter, path=path)
 
-    def chapter_sync(self, chapter: Chapter) -> Chapter:
+    def chapter_sync(self, chapter: Chapter, path: Path = Path.cwd()):
         """Download a chapter"""
 
-        return asyncio.run(self.chapter(chapter))
+        asyncio.run(self.chapter(chapter, path=path))
 
-    async def chapters(self, *chapters: List[Chapter]) -> List[Chapter]:
+    async def chapters(self, *chapters: List[Chapter], path: Path = Path.cwd()):
         """Download a set of chapters"""
 
         async with aiohttp.ClientSession() as session:
-            return await asyncio.gather(*(
-                asyncio.ensure_future(self._chapter(session, chapter))
+            await asyncio.gather(*(
+                asyncio.ensure_future(self._chapter(
+                    session, chapter, path=path))
                 for chapter in chapters
             ))
 
-    def chapters_sync(self, *chapters: List[Chapter]) -> List[Chapter]:
+    def chapters_sync(self, *chapters: List[Chapter], path: Path = Path.cwd()):
         """Download a set of chapters"""
 
-        return asyncio.run(self.chapters(*chapters))
+        asyncio.run(self.chapters(*chapters, path=path))

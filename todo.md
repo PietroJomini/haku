@@ -16,8 +16,10 @@
   - [ ] cloudfare bypass
   - [ ] query ranges
 - [ ] storage
-  - [ ] async follow-up from download
-  - [ ] raw
+  - [x] async follow-up from download
+  - [x] raw
+    - [ ] custom naming format
+  - [ ] json/yaml global meta
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
 - [ ] ui

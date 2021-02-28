@@ -45,6 +45,7 @@ class MangarockDownloader(Downloader):
             raw = await response.read()
             stream = io.BytesIO(decode(raw))
             page._raw = Image.open(stream)
+            stream.close()
             return page
 
 
