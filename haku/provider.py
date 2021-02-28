@@ -35,10 +35,7 @@ class Provider(eventh.Handler):
     def fetch_sync(self):
         """Fetch chapters"""
 
-        loop = asyncio.get_event_loop()
-        chapters = loop.run_until_complete(self.fetch())
-
-        return chapters
+        return asyncio.run(self.fetch())
 
     async def fetch(self):
         """Fetch chapters"""

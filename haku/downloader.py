@@ -36,8 +36,7 @@ class Downloader(eventh.Handler):
     def page_sync(self, page: Page) -> Page:
         """Download a page"""
 
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.page(page))
+        return asyncio.run(self.page(page))
 
     async def _chapter(self, session: aiohttp.ClientSession, chapter: Chapter) -> Chapter:
         """Chapter async worker"""
@@ -61,8 +60,7 @@ class Downloader(eventh.Handler):
     def chapter_sync(self, chapter: Chapter) -> Chapter:
         """Download a chapter"""
 
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.chapter(chapter))
+        return asyncio.run(self.chapter(chapter))
 
     async def chapters(self, *chapters: List[Chapter]) -> List[Chapter]:
         """Download a set of chapters"""
@@ -76,5 +74,4 @@ class Downloader(eventh.Handler):
     def chapters_sync(self, *chapters: List[Chapter]) -> List[Chapter]:
         """Download a set of chapters"""
 
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.chapters(*chapters))
+        return asyncio.run(self.chapters(*chapters))
