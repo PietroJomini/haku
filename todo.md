@@ -15,9 +15,9 @@
     - [x] index
 - [ ] download
   - [x] async
-    - [ ] chunked, k sessions
-    - [ ] parallel, one session
-    - [ ] sequentials, one session
+    - [x] chunked, k sessions
+    - [x] parallel, one session
+    - [x] sequentials, one session
   - [x] limit rate
   - [x] allow retry on connection error 
   - [ ] cloudfare bypass
