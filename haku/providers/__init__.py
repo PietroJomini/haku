@@ -1,7 +1,7 @@
 from haku.exceptions import NoProviderFound
 from importlib import import_module
 from haku.provider import Provider
-from typing import List
+from typing import List, Type
 import re
 
 
@@ -10,14 +10,14 @@ providers: List[str] = [
 ]
 
 
-def require(p: str, base: str = 'haku.providers') -> Provider:
+def require(p: str, base: str = 'haku.providers') -> Type[Provider]:
     """Import a provider"""
 
     mod = import_module(f'{base}.{p}')
     return mod.provider
 
 
-def route(r: str) -> Provider:
+def route(r: str) -> Type[Provider]:
     """Try to match a provider"""
 
     for provider in providers:
