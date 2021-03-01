@@ -30,13 +30,21 @@
   - [x] allow retry on connection error 
   - [ ] cloudfare bypass
 - [ ] manager
-  - [ ] query ranges
+  - [ ] query selectors
+    - [ ] chapters
+      - [ ] single
+      - [ ] ranges
+    - [ ] volume
 - [ ] storage
   - [x] async follow-up from download
   - [x] raw
-    - [ ] custom naming format
+    - [ ] allow for custom naming format
     - [ ] check number of images in each folder
-    - [ ] json/yaml global meta
+  - [x] serialize fetch
+    - [x] python dict
+    - [x] json
+    - [x] yaml
+    - [x] toml
 - [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
