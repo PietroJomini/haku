@@ -54,11 +54,11 @@ class Mangarock(Provider):
     pattern = r'^https://mangarock.to'
     downloader = MangarockDownloader
 
-    async def fetch_cover(self, session: aiohttp.ClientSession, url: str):
+    async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         thumb = page.select('div.thumb div')[0]['style']
         meta = re.search(r'background-image: url\(\'(.*)\'\);', thumb)
-        return await self.helpers.fetch_image(session, meta.group(1))
+        return meta.group(1)
 
     async def fetch_title(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)

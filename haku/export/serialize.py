@@ -20,6 +20,9 @@ class Serializer:
             title=self.manga.title,
         )
 
+        if self.manga.cover_url is not None:
+            manga_dict['cover_url'] = self.manga.cover_url
+
         if chapters:
             manga_dict['chapters'] = []
             for chapter in self.manga.chapters:

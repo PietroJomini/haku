@@ -30,5 +30,6 @@ class Manga:
     url: str
     title: str
 
+    cover_url: Optional[str] = None
     cover: Optional[Type[Image.Image]] = None
     chapters: Optional[List[Chapter]] = None

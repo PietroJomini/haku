@@ -29,6 +29,7 @@
   - [x] limit rate
   - [x] allow retry on connection error 
   - [ ] cloudfare bypass
+  - [ ] allow custom folder structure
 - [ ] manager
   - [ ] query selectors
     - [ ] chapters

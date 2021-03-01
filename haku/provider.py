@@ -73,7 +73,7 @@ class Provider(eventh.Handler):
         return asyncio.run(self.fetch())
 
     async def fetch(self) -> Manga:
-        """Fetch chapters"""
+        """Fetch manga"""
 
         async with aiohttp.ClientSession() as session:
 
@@ -81,9 +81,11 @@ class Provider(eventh.Handler):
             title = await self.fetch_title(session, self.url)
 
             self._d('fetch.cover')
-            cover = await self.fetch_cover(session, self.url)
+            cover_url = await self.fetch_cover_url(session, self.url)
+            cover = await self.fetch_cover(session, cover_url) if cover_url is not None else None
 
-            manga = Manga(title=title, url=self.url, cover=cover)
+            manga = Manga(title=title, url=self.url,
+                          cover_url=cover_url, cover=cover)
 
             self._d('fetch.chapters')
             chapters_meta = await self.fetch_chapters(session, self.url)
@@ -114,10 +116,15 @@ class Provider(eventh.Handler):
     async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve manga title"""
 
-    async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> Optional[Type[Image.Image]]:
+    async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
         """Retrieve manga cover"""
 
         return None
+
+    async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> Optional[Type[Image.Image]]:
+        """Retrieve manga cover"""
+
+        return await self.helpers.fetch_image(session, url)
 
 
 def route(r: str) -> Type[Provider]:
