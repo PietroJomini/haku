@@ -54,17 +54,17 @@ class Mangarock(Provider):
     pattern = r'^https://mangarock.to'
     downloader = MangarockDownloader
 
-    async def fetch_cover(self, url: str, session: aiohttp.ClientSession):
+    async def fetch_cover(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         thumb = page.select('div.thumb div')[0]['style']
         meta = re.search(r'background-image: url\(\'(.*)\'\);', thumb)
         return await self.helpers.fetch_image(session, meta.group(1))
 
-    async def fetch_title(self, url: str, session: aiohttp.ClientSession):
+    async def fetch_title(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         return page.select('div.info h1')[0].text
 
-    async def fetch_chapters(self, url: str, session: aiohttp.ClientSession) -> List[Chapter]:
+    async def fetch_chapters(self, session: aiohttp.ClientSession, url: str) -> List[Chapter]:
         page = await self.helpers.scrape_and_cook(session, url)
 
         chapters = []
@@ -86,7 +86,7 @@ class Mangarock(Provider):
 
         return chapters
 
-    async def fetch_pages(self, chapter: Chapter, session: aiohttp.ClientSession) -> List[Page]:
+    async def fetch_pages(self, session: aiohttp.ClientSession, chapter: Chapter) -> List[Page]:
         page = await self.helpers.scrape_and_cook(session, chapter.url)
 
         pages = []

@@ -74,19 +74,19 @@ class Provider(eventh.Handler):
         async with aiohttp.ClientSession() as session:
 
             self._d('fetch.title')
-            title = await self.fetch_title(self.url, session)
+            title = await self.fetch_title(session, self.url)
 
             self._d('fetch.cover')
-            cover = await self.fetch_cover(self.url, session)
+            cover = await self.fetch_cover(session, self.url)
 
             manga = Manga(title=title, url=self.url, cover=cover)
 
             self._d('fetch.chapters')
-            chapters_meta = await self.fetch_chapters(self.url, session)
+            chapters_meta = await self.fetch_chapters(session, self.url)
 
             self._d('fetch.pages')
             pages = await asyncio.gather(*(
-                asyncio.ensure_future(self.fetch_pages(chapter, session))
+                asyncio.ensure_future(self.fetch_pages(session, chapter))
                 for chapter in chapters_meta
             ))
 
@@ -99,18 +99,18 @@ class Provider(eventh.Handler):
             return manga
 
     @abstract
-    async def fetch_chapters(self, url: str, session: aiohttp.ClientSession) -> List[Chapter]:
+    async def fetch_chapters(self, session: aiohttp.ClientSession, url: str) -> List[Chapter]:
         """Retrieve chapters list"""
 
     @abstract
-    async def fetch_pages(self, chapter: Chapter, session: aiohttp.ClientSession) -> List[Page]:
+    async def fetch_pages(self, session: aiohttp.ClientSession, chapter: Chapter) -> List[Page]:
         """Retrieve chapter pages"""
 
     @abstract
-    async def fetch_title(self, url: str, session: aiohttp.ClientSession) -> str:
+    async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve manga title"""
 
-    async def fetch_cover(self, url: str, session: aiohttp.ClientSession) -> Optional[Type[Image.Image]]:
+    async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> Optional[Type[Image.Image]]:
         """Retrieve manga cover"""
 
         return None
