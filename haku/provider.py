@@ -12,13 +12,22 @@ import asyncio
 class Helpers():
     """Provider helpers"""
 
-    @staticmethod
-    async def scrape_webpage(session: aiohttp.ClientSession, url: str) -> BeautifulSoup:
+    def __init__(self):
+        self.cached_webpages = {}
+
+    async def scrape_webpage(self, session: aiohttp.ClientSession, url: str, allow_cached=True) -> BeautifulSoup:
         """Scrape a webpage into a BeautifulSoup soup"""
+
+        if url in self.cached_webpages and allow_cached:
+            print(f'Using cached {url}')
+            return self.cached_webpages[url]
 
         async with session.get(url) as response:
             content = await response.text()
-            return BeautifulSoup(content, 'html.parser')
+            soup = BeautifulSoup(content, 'html.parser')
+            self.cached_webpages[url] = soup
+
+            return soup
 
 
 class Provider(eventh.Handler):
@@ -32,6 +41,7 @@ class Provider(eventh.Handler):
 
     def __init__(self, url: str):
         self.url = url
+        self.helpers = Helpers()
 
     def fetch_sync(self) -> Manga:
         """Fetch chapters"""

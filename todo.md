@@ -19,6 +19,8 @@
     - [ ] artist(s)
     - [ ] ongoing / completed
   - [ ] better webpage fetch
+    - [x] cached
+    - [ ] more flexible
 - [ ] download
   - [x] async
     - [x] chunked, k sessions

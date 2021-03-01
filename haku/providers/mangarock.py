@@ -1,6 +1,6 @@
-from haku.provider import Provider, Helpers
 from haku.downloader import Downloader
 from haku.meta import Chapter, Page
+from haku.provider import Provider
 from typing import List
 from PIL import Image
 import aiohttp
@@ -55,7 +55,7 @@ class Mangarock(Provider):
     downloader = MangarockDownloader
 
     async def fetch_cover(self, url: str, session: aiohttp.ClientSession):
-        page = await Helpers.scrape_webpage(session, url)
+        page = await self.helpers.scrape_webpage(session, url)
         thumb = page.select('div.thumb div')[0]['style']
         meta = re.search(r'background-image: url\(\'(.*)\'\);', thumb)
         thumb_url = meta.group(1)
@@ -67,11 +67,11 @@ class Mangarock(Provider):
             return image
 
     async def fetch_title(self, url: str, session: aiohttp.ClientSession):
-        page = await Helpers.scrape_webpage(session, url)
+        page = await self.helpers.scrape_webpage(session, url)
         return page.select('div.info h1')[0].text
 
     async def fetch_chapters(self, url: str, session: aiohttp.ClientSession) -> List[Chapter]:
-        page = await Helpers.scrape_webpage(session, url)
+        page = await self.helpers.scrape_webpage(session, url)
 
         chapters = []
         for chapter in page.select('div.all-chapers tbody a'):
@@ -93,7 +93,7 @@ class Mangarock(Provider):
         return chapters
 
     async def fetch_pages(self, chapter: Chapter, session: aiohttp.ClientSession) -> List[Page]:
-        page = await Helpers.scrape_webpage(session, chapter.url)
+        page = await self.helpers.scrape_webpage(session, chapter.url)
 
         pages = []
         meta = re.search(r'var mangaData = (.*?);', str(page))
