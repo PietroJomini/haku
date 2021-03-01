@@ -1,5 +1,5 @@
+from typing import Optional, List, Type
 from dataclasses import dataclass
-from typing import Optional, List
 from PIL import Image
 
 
@@ -21,3 +21,14 @@ class Chapter:
 
     volume: Optional[str] = None
     _pages: Optional[List[Page]] = None
+
+
+@dataclass
+class Manga:
+    """Manga meta"""
+
+    url: str
+    title: str
+
+    cover: Optional[Type[Image.Image]] = None
+    chapters: Optional[List[Chapter]] = None

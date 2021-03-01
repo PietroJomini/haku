@@ -1,9 +1,10 @@
+from haku.meta import Chapter, Page, Manga
 from aiohttp.client import ClientSession
 from haku.utils import abstract, eventh
+from typing import List, Optional, Type
 from haku.downloader import Downloader
-from haku.meta import Chapter, Page
 from bs4 import BeautifulSoup
-from typing import List, Type
+from PIL import Image
 import aiohttp
 import asyncio
 
@@ -32,15 +33,23 @@ class Provider(eventh.Handler):
     def __init__(self, url: str):
         self.url = url
 
-    def fetch_sync(self):
+    def fetch_sync(self) -> Manga:
         """Fetch chapters"""
 
         return asyncio.run(self.fetch())
 
-    async def fetch(self):
+    async def fetch(self) -> Manga:
         """Fetch chapters"""
 
         async with aiohttp.ClientSession() as session:
+
+            self._d('fetch.title')
+            title = await self.fetch_title(self.url, session)
+
+            self._d('fetch.cover')
+            cover = await self.fetch_cover(self.url, session)
+
+            manga = Manga(title=title, url=self.url, cover=cover)
 
             self._d('fetch.chapters')
             chapters_meta = await self.fetch_chapters(self.url, session)
@@ -51,11 +60,13 @@ class Provider(eventh.Handler):
                 for chapter in chapters_meta
             ))
 
-            return [
+            manga.chapters = [
                 Chapter(url=c.url, index=c.index, title=c.title,
                         volume=c.volume, _pages=p)
                 for c, p in zip(chapters_meta, pages)
             ]
+
+            return manga
 
     @abstract
     async def fetch_chapters(self, url: str, session: aiohttp.ClientSession) -> List[Chapter]:
@@ -64,3 +75,12 @@ class Provider(eventh.Handler):
     @abstract
     async def fetch_pages(self, chapter: Chapter, session: aiohttp.ClientSession) -> List[Page]:
         """Retrieve chapter pages"""
+
+    @abstract
+    async def fetch_title(self, url: str, session: aiohttp.ClientSession) -> str:
+        """Retrieve manga title"""
+
+    async def fetch_cover(self, url: str, session: aiohttp.ClientSession) -> Optional[Type[Image.Image]]:
+        """Retrieve manga cover"""
+
+        return None

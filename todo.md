@@ -13,6 +13,12 @@
   - [x] pages
     - [x] url
     - [x] index
+  - [x] title
+  - [ ] generic meta, not mandatory
+    - [x] cover
+    - [ ] artist(s)
+    - [ ] ongoing / completed
+  - [ ] better webpage fetch
 - [ ] download
   - [x] async
     - [x] chunked, k sessions

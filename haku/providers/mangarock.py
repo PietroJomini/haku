@@ -54,6 +54,22 @@ class Mangarock(Provider):
     pattern = r'^https://mangarock.to'
     downloader = MangarockDownloader
 
+    async def fetch_cover(self, url: str, session: aiohttp.ClientSession):
+        page = await Helpers.scrape_webpage(session, url)
+        thumb = page.select('div.thumb div')[0]['style']
+        meta = re.search(r'background-image: url\(\'(.*)\'\);', thumb)
+        thumb_url = meta.group(1)
+
+        async with session.get(thumb_url) as response:
+            raw = await response.read()
+            stream = io.BytesIO(raw)
+            image = Image.open(stream)
+            return image
+
+    async def fetch_title(self, url: str, session: aiohttp.ClientSession):
+        page = await Helpers.scrape_webpage(session, url)
+        return page.select('div.info h1')[0].text
+
     async def fetch_chapters(self, url: str, session: aiohttp.ClientSession) -> List[Chapter]:
         page = await Helpers.scrape_webpage(session, url)
 
