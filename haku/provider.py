@@ -1,13 +1,17 @@
+from haku.exceptions import NoProviderFound
 from haku.meta import Chapter, Page, Manga
 from aiohttp.client import ClientSession
 from haku.utils import abstract, eventh
 from typing import List, Optional, Type
 from haku.downloader import Downloader
+from haku.providers import providers
+from importlib import import_module
 from bs4 import BeautifulSoup
 from io import BytesIO
 from PIL import Image
 import aiohttp
 import asyncio
+import re
 
 
 class Helpers():
@@ -114,3 +118,14 @@ class Provider(eventh.Handler):
         """Retrieve manga cover"""
 
         return None
+
+
+def route(r: str) -> Type[Provider]:
+    """Try to match a provider from the enabled providers"""
+
+    for provider in providers:
+        candidate = import_module(f'haku.providers.{provider}').provider
+        if candidate.enabled and re.match(candidate.pattern, r):
+            return candidate(r)
+
+    raise NoProviderFound(f'No provider match route "{r}"')
