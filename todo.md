@@ -18,9 +18,9 @@
     - [x] cover
     - [ ] artist(s)
     - [ ] ongoing / completed
-  - [ ] better webpage fetch
+  - [x] better helpers scrape
     - [x] cached
-    - [ ] more flexible
+    - [x] more flexible
 - [ ] download
   - [x] async
     - [x] chunked, k sessions

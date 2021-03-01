@@ -4,6 +4,7 @@ from haku.utils import abstract, eventh
 from typing import List, Optional, Type
 from haku.downloader import Downloader
 from bs4 import BeautifulSoup
+from io import BytesIO
 from PIL import Image
 import aiohttp
 import asyncio
@@ -14,9 +15,10 @@ class Helpers():
 
     def __init__(self):
         self.cached_webpages = {}
+        self.cached_soups = {}
 
-    async def scrape_webpage(self, session: aiohttp.ClientSession, url: str, allow_cached=True) -> BeautifulSoup:
-        """Scrape a webpage into a BeautifulSoup soup"""
+    async def scrape(self, session: aiohttp.ClientSession, url: str, allow_cached=True) -> str:
+        """Scrape a webpage"""
 
         if url in self.cached_webpages and allow_cached:
             print(f'Using cached {url}')
@@ -24,10 +26,28 @@ class Helpers():
 
         async with session.get(url) as response:
             content = await response.text()
-            soup = BeautifulSoup(content, 'html.parser')
-            self.cached_webpages[url] = soup
+            self.cached_webpages[url] = content
+            return content
 
-            return soup
+    async def scrape_and_cook(self, session: aiohttp.ClientSession, url: str, allow_cached=True, parser='html.parser') -> BeautifulSoup:
+        """Scrape a webpage into a BeautifulSoup soup"""
+
+        if url in self.cached_soups and allow_cached:
+            return self.cached_soups[url]
+
+        content = await self.scrape(session, url, allow_cached=allow_cached)
+        soup = BeautifulSoup(content, parser)
+        self.cached_soups[url] = soup
+        return soup
+
+    async def fetch_image(self, session: aiohttp.ClientSession, url: str) -> Image:
+        """Scrape an image into a PIL Image"""
+
+        async with session.get(url) as response:
+            raw = await response.read()
+            stream = BytesIO(raw)
+            image = Image.open(stream)
+            return image
 
 
 class Provider(eventh.Handler):
