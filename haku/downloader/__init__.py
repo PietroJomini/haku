@@ -2,10 +2,12 @@ from haku.meta import Page, Chapter
 from haku.utils import eventh
 from haku.fs import write_page
 from pathlib import Path
+from typing import Tuple
 from io import BytesIO
 from PIL import Image
 import aiohttp
 import asyncio
+import ssl
 
 
 class Downloader(eventh.Handler):
@@ -13,6 +15,10 @@ class Downloader(eventh.Handler):
 
     RETRY_ON_CONNECTION_ERROR: bool = True
     RATE_LIMIT: int = 50
+    ALLOWED_CONNECTION_ERRORS: Tuple[Exception] = (
+        aiohttp.ClientError,
+        ssl.SSLError
+    )
 
     async def _page(self, session: aiohttp.ClientSession, page: Page) -> Image:
         """Page downloader async worker"""
@@ -32,13 +38,13 @@ class Downloader(eventh.Handler):
         try:
             image = await self._page(session, page)
 
-        except aiohttp.ClientError as err:
-            self._d('page.error.aiohttp', page, err)
+        except self.ALLOWED_CONNECTION_ERRORS as err:
+            self._d('page.error.allowed', page, err)
             if self.RETRY_ON_CONNECTION_ERROR:
                 return await self.page(session, page, path)
 
         except Exception as err:
-            self._d('page.error.generic', page, err)
+            self._d('page.error.not_allowed', page, err)
 
         else:
             self._d('page.write', page)

@@ -45,6 +45,7 @@
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
     - [x] chapter
+  - [ ] epub
   - [x] serialize fetch
     - [x] python dict
     - [x] json
