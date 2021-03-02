@@ -16,21 +16,13 @@ class Method():
     """Download methods"""
 
     @staticmethod
-    def simple() -> Callable[[Endpoints, FTree, Manga], None]:
-        """Download chapters concurrently, using one session"""
-
-        async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
-            async with aiohttp.ClientSession() as session:
-                await endpoints.pages(session, *tree.flatten(*manga.chapters))
-
-        return method
-
-    @staticmethod
-    def chunked(chunk_size: int = 1) -> Callable[[Endpoints, FTree, Manga], None]:
+    def batch(size: int = 0) -> Callable[[Endpoints, FTree, Manga], None]:
         """Download chapters in chunk"""
 
         async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
-            for chunk in chunks(list(tree.flatten(*manga.chapters)), chunk_size):
+            pages = list(tree.flatten(*manga.chapters))
+            actual_size = len(pages) if size == 0 else size
+            for chunk in chunks(pages, actual_size):
                 async with aiohttp.ClientSession() as session:
                     await endpoints.pages(session, *chunk)
 
@@ -54,7 +46,7 @@ class Downloader(eventh.Handler):
         self.endpoints = endpoints
         self.manga = manga
 
-    def download(self, method: Callable = Method.simple()):
+    def download(self, method: Callable = Method.batch()):
         """Download the manga following the preferred method"""
 
         async def runner():

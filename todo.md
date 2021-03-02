@@ -28,6 +28,7 @@
     - [x] sequentials, one session
   - [x] limit rate
   - [x] allow retry on connection error 
+  - [ ] resume, comparing dir tree with serialized yaml (json?)
   - [ ] cloudfare bypass
   - [x] allow custom folder structure (customizing an FTree)
 - [ ] manager
