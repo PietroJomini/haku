@@ -52,7 +52,7 @@ class MangarockDownloader(Downloader):
 class Mangarock(Provider):
     name = 'mangarock'
     pattern = r'^https://mangarock.to'
-    downloader = MangarockDownloader
+    downloader_t = MangarockDownloader
 
     async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)

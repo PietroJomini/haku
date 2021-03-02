@@ -61,11 +61,12 @@ class Provider(eventh.Handler):
     pattern: str
 
     enabled: bool = True
-    downloader: Type[Downloader] = Downloader
+    downloader_t: Type[Downloader] = Downloader
 
     def __init__(self, url: str):
         self.url = url
         self.helpers = Helpers()
+        self.downloader = self.downloader_t()
 
     def fetch_sync(self) -> Manga:
         """Fetch chapters"""
