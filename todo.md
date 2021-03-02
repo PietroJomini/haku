@@ -41,14 +41,15 @@
   - [x] raw
     - [ ] allow for custom naming format
     - [ ] check number of images in each folder
+- [ ] formatters
+  - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
+  - [ ] pdf
+    - [x] chapter
   - [x] serialize fetch
     - [x] python dict
     - [x] json
     - [x] yaml
     - [x] toml
-- [ ] formatters
-  - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
-  - [ ] pdf
 - [ ] ui
   - [ ] cli
   - [ ] web
