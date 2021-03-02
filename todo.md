@@ -47,6 +47,7 @@
 - [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
+    - [ ] multiprocessing?
     - [x] chapter
     - [ ] merge
       - [ ] chunk size modifier

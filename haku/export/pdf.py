@@ -5,7 +5,11 @@ from haku.downloader.fs import Reader
 from haku.meta import Chapter, Manga
 from io import BytesIO, RawIOBase
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageFile
+
+
+# TODO(me) Investigate
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 def _merge(pdfs: List[Path]) -> PdfFileMerger:
@@ -39,6 +43,9 @@ def chapter(chapter: Chapter, reader: Reader, out: Union[IO[bytes], Path], pages
         append_images=images[1:],
         resolution=100.0
     )
+
+    for image in images:
+        image.close()
 
     if temp:
         stream.close()
