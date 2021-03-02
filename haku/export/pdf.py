@@ -1,10 +1,22 @@
+from PyPDF2 import PdfFileMerger, PdfFileReader
 from typing import Optional, IO, List, Union
-from haku.meta import Chapter, Manga
+from haku.utils import ensure_bytesio
 from haku.downloader.fs import Reader
+from haku.meta import Chapter, Manga
+from io import BytesIO, RawIOBase
 from pathlib import Path
 from PIL import Image
-from io import BytesIO, RawIOBase
-from haku.utils import ensure_bytesio
+
+
+def _merge(pdfs: List[Path]) -> PdfFileMerger:
+    """Merge pdf files"""
+
+    merger = PdfFileMerger()
+    for pdf in pdfs:
+        partial = PdfFileReader(str(pdf), 'rb')
+        merger.append(partial)
+
+    return merger
 
 
 def chapter(chapter: Chapter, reader: Reader, out: Union[IO[bytes], Path], pages_suffixes: List[str] = ['.png']) -> RawIOBase:
