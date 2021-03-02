@@ -39,12 +39,17 @@
 - [ ] storage
   - [x] async follow-up from download
   - [x] raw
+    - [ ] formalize folders tree creation
     - [ ] allow for custom naming format
     - [ ] check number of images in each folder
 - [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
   - [ ] pdf
     - [x] chapter
+    - [ ] merge
+      - [ ] chunk size modifier
+      - [ ] bookmarks
+      - [x] rawly merge
   - [ ] epub
   - [x] serialize fetch
     - [x] python dict

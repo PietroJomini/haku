@@ -1,7 +1,21 @@
-from typing import Optional, IO
-from haku.meta import Chapter
+from PyPDF2 import PdfFileMerger, PdfFileReader
+from typing import Optional, IO, List, Union
+from haku.meta import Chapter, Manga
 from pathlib import Path
 from PIL import Image
+
+
+def _merge(pdfs: List[Path], out: Union[Path, IO[bytes]]):
+    """Merge pdf files"""
+
+    merger = PdfFileMerger()
+    for pdf in pdfs:
+        print(f'PDF {pdf}')
+        partial = PdfFileReader(str(pdf), 'rb')
+        merger.append(partial)
+
+    out = str(out) if isinstance(out, Path) else out
+    merger.write(out)
 
 
 def chapter(ch: Chapter, path: Path, out: Optional[IO[bytes]] = None, out_path: Optional[Path] = None, pages_suffixes=['.png']):
@@ -39,3 +53,6 @@ def chapter(ch: Chapter, path: Path, out: Optional[IO[bytes]] = None, out_path: 
 
         with(open(pdf_path, 'wb')) as out:
             _save_images(out)
+
+    for image in images:
+        image.close()
