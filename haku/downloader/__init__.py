@@ -1,5 +1,5 @@
+from typing import Tuple, Type, Union, Callable, List, Generator
 from haku.utils import eventh, write_image, chunks
-from typing import Tuple, Type, Union, Callable
 from haku.downloader.endpoints import Endpoints
 from haku.meta import Page, Chapter, Manga
 from haku.provider import Provider
@@ -29,6 +29,14 @@ class FTree:
             volume=chapter.volume
         )
 
+    def flatten(self, *chapters: Chapter, fmt='{index} {title}') -> Generator[Tuple[Page, Path], None, None]:
+        """Flatten all pages in a list with the related paths"""
+
+        for chapter in chapters:
+            path = self.chapter(chapter, fmt=fmt)
+            for page in chapter._pages:
+                yield page, path
+
 
 class Method():
     """Download methods"""
@@ -39,13 +47,7 @@ class Method():
 
         async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
             async with aiohttp.ClientSession() as session:
-                tasks = (endpoints.chapter(
-                    session,
-                    chapter,
-                    tree.chapter(chapter)
-                ) for chapter in manga.chapters)
-
-                await asyncio.gather(*tasks)
+                await endpoints.pages(session, *tree.flatten(*manga.chapters))
 
         return method
 
@@ -54,15 +56,9 @@ class Method():
         """Download chapters in chunk"""
 
         async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
-            for chunk in chunks(manga.chapters, chunk_size):
+            for chunk in chunks(list(tree.flatten(*manga.chapters)), chunk_size):
                 async with aiohttp.ClientSession() as session:
-                    tasks = (endpoints.chapter(
-                        session,
-                        chapter,
-                        tree.chapter(chapter)
-                    ) for chapter in chunk)
-
-                    await asyncio.gather(*tasks)
+                    await endpoints.pages(session, *chunk)
 
         return method
 

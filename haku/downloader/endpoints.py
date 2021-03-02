@@ -10,7 +10,7 @@ import ssl
 
 
 class Endpoints(eventh.Handler):
-    """Downloader defaults endpoints"""
+    """Downloader endpoints"""
 
     RETRY_ON_CONNECTION_ERROR: bool = True
     ALLOWED_CONNECTION_ERRORS: Tuple[Exception] = (
@@ -29,7 +29,7 @@ class Endpoints(eventh.Handler):
             return image
 
     async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
-        """Download and write page to disk"""
+        """Download and write a page to disk"""
 
         self._d('page', page)
 
@@ -51,10 +51,8 @@ class Endpoints(eventh.Handler):
         finally:
             self._d('page.end', page)
 
-    async def chapter(self, session: aiohttp.ClientSession, chapter: Chapter, path: Path):
-        """Download and write a chapter to disk"""
+    async def pages(self, session: aiohttp.ClientSession, *pages: Tuple[Page, Path]):
+        """Download a d write pages to disk"""
 
-        self._d('chapter')
-        tasks = (self.page(session, page, path) for page in chapter._pages)
+        tasks = (self.page(session, page, path) for page, path in pages)
         await asyncio.gather(*tasks)
-        self._d('chapter.end')

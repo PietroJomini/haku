@@ -41,6 +41,7 @@
   - [x] raw
     - [x] formalize folders tree creation
     - [x] allow for custom naming format
+    - [ ] save images on different thread process
     - [ ] check number of images in each folder
 - [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)
