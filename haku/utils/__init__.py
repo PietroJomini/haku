@@ -1,4 +1,6 @@
 from typing import Callable, Any
+from pathlib import Path
+from PIL import Image
 
 
 def call_safe(cb: Callable, *args, **argv) -> Any:
@@ -23,3 +25,14 @@ def chunks(lst, n):
 
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
+
+def write_image(image: Image.Image, path: Path, filename: str, fmt='png', cleanup=True):
+    """Write an image to disk"""
+
+    path.mkdir(parents=True, exist_ok=True)
+    image.save(str(path / f'{filename}.{fmt}'), format=fmt)
+
+    if cleanup:
+        image.close()
+        del image

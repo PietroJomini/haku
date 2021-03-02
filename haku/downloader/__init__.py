@@ -1,6 +1,5 @@
+from haku.utils import eventh, write_image
 from haku.meta import Page, Chapter
-from haku.utils import eventh
-from haku.fs import write_page
 from pathlib import Path
 from typing import Tuple
 from io import BytesIO
@@ -48,7 +47,7 @@ class Downloader(eventh.Handler):
 
         else:
             self._d('page.write', page)
-            write_page(page, image, path)
+            write_image(image, path, page.index)
 
         finally:
             self._d('page.end', page)
