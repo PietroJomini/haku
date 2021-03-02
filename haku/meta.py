@@ -7,7 +7,7 @@ from PIL import Image
 class Page:
     """Page meta"""
 
-    url: str
+    url: int
     index: str
 
 

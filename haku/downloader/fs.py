@@ -1,6 +1,7 @@
 from haku.meta import Page, Chapter, Manga
 from typing import Generator, Tuple
 from pathlib import Path
+from PIL import Image
 
 
 class FTree:
@@ -28,3 +29,19 @@ class FTree:
             path = self.chapter(chapter, fmt=fmt)
             for page in chapter._pages:
                 yield page, path
+
+
+class Reader:
+    """Folder tree reader"""
+
+    def __init__(self, tree: FTree):
+        self.tree = tree
+
+    def chapter(self, chapter: Chapter, mode='RGB', ext='png') -> Generator[Tuple[Page, Image.Image], None, None]:
+        """Read images from chapter"""
+
+        for page, path in self.tree.flatten(chapter):
+            image = Image.open(path / f'{page.index}.{ext}')
+            if image.mode != mode:
+                image = image.convert(mode)
+            yield page, image

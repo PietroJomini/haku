@@ -1,4 +1,5 @@
-from typing import Callable, Any
+from typing import Callable, Any, Optional, Union, IO
+from io import RawIOBase, BytesIO
 from pathlib import Path
 from PIL import Image
 
@@ -36,3 +37,12 @@ def write_image(image: Image.Image, path: Path, filename: str, fmt='png', cleanu
     if cleanup:
         image.close()
         del image
+
+
+def ensure_bytesio(candidate: Union[Path, IO[bytes]], mode='wb') -> Union[IO[bytes], bool]:
+    """Ensure as bytes iostream"""
+
+    if isinstance(candidate, Path):
+        return candidate.open(mode), True
+
+    return candidate, False

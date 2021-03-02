@@ -94,7 +94,7 @@ class Mangarock(Provider):
         for index, page in enumerate(json.loads(meta.group(1))):
             pages.append(Page(
                 url=page['url'],
-                index=str(index)
+                index=index
             ))
 
         return pages
