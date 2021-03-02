@@ -29,7 +29,7 @@
   - [x] limit rate
   - [x] allow retry on connection error 
   - [ ] cloudfare bypass
-  - [ ] allow custom folder structure
+  - [x] allow custom folder structure (customizing an FTree)
 - [ ] manager
   - [ ] query selectors
     - [ ] chapters
@@ -39,8 +39,8 @@
 - [ ] storage
   - [x] async follow-up from download
   - [x] raw
-    - [ ] formalize folders tree creation
-    - [ ] allow for custom naming format
+    - [x] formalize folders tree creation
+    - [x] allow for custom naming format
     - [ ] check number of images in each folder
 - [ ] formatters
   - [ ] [cb*](https://en.wikipedia.org/wiki/Comic_book_archive)

@@ -1,7 +1,9 @@
-from haku.utils import eventh, write_image
-from haku.meta import Page, Chapter
+from haku.utils import eventh, write_image, chunks
+from typing import Tuple, Type, Union, Callable
+from haku.downloader.endpoints import Endpoints
+from haku.meta import Page, Chapter, Manga
+from haku.provider import Provider
 from pathlib import Path
-from typing import Tuple
 from io import BytesIO
 from PIL import Image
 import aiohttp
@@ -9,65 +11,84 @@ import asyncio
 import ssl
 
 
-class Downloader(eventh.Handler):
-    """Downloader defaults"""
+class FTree:
+    """Folders tree builder"""
 
-    RETRY_ON_CONNECTION_ERROR: bool = True
-    RATE_LIMIT: int = 50
-    ALLOWED_CONNECTION_ERRORS: Tuple[Exception] = (
-        aiohttp.ClientError,
-        ssl.SSLError
-    )
+    def __init__(self, root: Path, manga: Manga, fmt='{title}'):
+        self.root = root / fmt.format(
+            title=manga.title,
+            url=manga.url
+        )
 
-    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Image:
-        """Page downloader async worker"""
+    def chapter(self, chapter: Chapter, fmt='{index} {title}') -> Path:
+        """Build chapter path"""
 
-        async with session.get(page.url) as response:
-            raw = await response.read()
-            stream = BytesIO(raw)
-            image = Image.open(stream)
-            stream.close()
-            return image
+        return self.root / fmt.format(
+            index=chapter.index,
+            title=chapter.title,
+            volume=chapter.volume
+        )
 
-    async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
-        """Download and write page to disk"""
 
-        self._d('page', page)
+class Method():
+    """Download methods"""
 
-        try:
-            image = await self._page(session, page)
+    @staticmethod
+    def simple() -> Callable[[Endpoints, FTree, Manga], None]:
+        """Download chapters concurrently, using one session"""
 
-        except self.ALLOWED_CONNECTION_ERRORS as err:
-            self._d('page.error.allowed', page, err)
-            if self.RETRY_ON_CONNECTION_ERROR:
-                return await self.page(session, page, path)
-
-        except Exception as err:
-            self._d('page.error.not_allowed', page, err)
-
-        else:
-            self._d('page.write', page)
-            write_image(image, path, page.index)
-
-        finally:
-            self._d('page.end', page)
-
-    async def _chapter(self, session: aiohttp.ClientSession, chapter: Chapter, path: Path):
-        """Chapter downloader async worker"""
-
-        self._d('chapter')
-        new_path = path / f'{chapter.index} {chapter.title}'
-        tasks = (self.page(session, page, new_path) for page in chapter._pages)
-
-        await asyncio.gather(*tasks)
-        self._d('chapter.end')
-
-    async def chapters(self, *chapters: Chapter, path: Path = Path.cwd()):
-        """Download a set of chapters"""
-
-        async with asyncio.Semaphore(self.RATE_LIMIT):
+        async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
             async with aiohttp.ClientSession() as session:
-                tasks = (self._chapter(session, chapter, path)
-                         for chapter in chapters)
+                tasks = (endpoints.chapter(
+                    session,
+                    chapter,
+                    tree.chapter(chapter)
+                ) for chapter in manga.chapters)
 
                 await asyncio.gather(*tasks)
+
+        return method
+
+    @staticmethod
+    def chunked(chunk_size: int = 1) -> Callable[[Endpoints, FTree, Manga], None]:
+        """Download chapters in chunk"""
+
+        async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
+            for chunk in chunks(manga.chapters, chunk_size):
+                async with aiohttp.ClientSession() as session:
+                    tasks = (endpoints.chapter(
+                        session,
+                        chapter,
+                        tree.chapter(chapter)
+                    ) for chapter in chunk)
+
+                    await asyncio.gather(*tasks)
+
+        return method
+
+
+class Downloader(eventh.Handler):
+    """Downloader"""
+
+    RATE_LIMIT: int = 200
+    endpoints: Type[Endpoints] = Endpoints
+
+    @staticmethod
+    def from_provider(provider: Provider, manga: Manga, root: Union[Path, FTree]):
+        """Instantiate a downloader from a provider"""
+
+        return Downloader(provider.endpoints(), manga, root)
+
+    def __init__(self, endpoints: Endpoints, manga: Manga, root: Union[Page, FTree]):
+        self.tree = root if isinstance(root, FTree) else FTree(root, manga)
+        self.endpoints = endpoints
+        self.manga = manga
+
+    def download(self, method: Callable = Method.simple()):
+        """Download the manga following the preferred method"""
+
+        async def runner():
+            async with asyncio.Semaphore(self.RATE_LIMIT):
+                await method(self.endpoints, self.tree, self.manga)
+
+        asyncio.run(runner())

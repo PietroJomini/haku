@@ -1,9 +1,9 @@
+from haku.downloader.endpoints import Endpoints
 from haku.exceptions import NoProviderFound
 from haku.meta import Chapter, Page, Manga
 from aiohttp.client import ClientSession
 from haku.utils import abstract, eventh
 from typing import List, Optional, Type
-from haku.downloader import Downloader
 from haku.providers import providers
 from importlib import import_module
 from bs4 import BeautifulSoup
@@ -61,12 +61,11 @@ class Provider(eventh.Handler):
     pattern: str
 
     enabled: bool = True
-    downloader_t: Type[Downloader] = Downloader
+    endpoints: Type[Endpoints] = Endpoints
 
     def __init__(self, url: str):
         self.url = url
         self.helpers = Helpers()
-        self.downloader = self.downloader_t()
 
     def fetch_sync(self) -> Manga:
         """Fetch chapters"""

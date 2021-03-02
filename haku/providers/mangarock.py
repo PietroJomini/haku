@@ -1,4 +1,4 @@
-from haku.downloader import Downloader
+from haku.downloader.endpoints import Endpoints
 from haku.meta import Chapter, Page
 from haku.provider import Provider
 from typing import List
@@ -38,7 +38,7 @@ def decode(buffer):
     return result
 
 
-class MangarockDownloader(Downloader):
+class MangarockEndpoints(Endpoints):
 
     async def _page(self, session: aiohttp.ClientSession, page: Page) -> Page:
         async with session.get(page.url) as response:
@@ -52,7 +52,7 @@ class MangarockDownloader(Downloader):
 class Mangarock(Provider):
     name = 'mangarock'
     pattern = r'^https://mangarock.to'
-    downloader_t = MangarockDownloader
+    endpoints = MangarockEndpoints
 
     async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
