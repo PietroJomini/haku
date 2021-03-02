@@ -2,6 +2,7 @@ from typing import Tuple, Type, Union, Callable, List, Generator
 from haku.utils import eventh, write_image, chunks
 from haku.downloader.endpoints import Endpoints
 from haku.meta import Page, Chapter, Manga
+from haku.downloader.fs import FTree
 from haku.provider import Provider
 from pathlib import Path
 from io import BytesIO
@@ -9,33 +10,6 @@ from PIL import Image
 import aiohttp
 import asyncio
 import ssl
-
-
-class FTree:
-    """Folders tree builder"""
-
-    def __init__(self, root: Path, manga: Manga, fmt='{title}'):
-        self.root = root / fmt.format(
-            title=manga.title,
-            url=manga.url
-        )
-
-    def chapter(self, chapter: Chapter, fmt='{index} {title}') -> Path:
-        """Build chapter path"""
-
-        return self.root / fmt.format(
-            index=chapter.index,
-            title=chapter.title,
-            volume=chapter.volume
-        )
-
-    def flatten(self, *chapters: Chapter, fmt='{index} {title}') -> Generator[Tuple[Page, Path], None, None]:
-        """Flatten all pages in a list with the related paths"""
-
-        for chapter in chapters:
-            path = self.chapter(chapter, fmt=fmt)
-            for page in chapter._pages:
-                yield page, path
 
 
 class Method():
