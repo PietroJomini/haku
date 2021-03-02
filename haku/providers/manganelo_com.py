@@ -1,58 +1,11 @@
-from haku.raw.endpoints import Endpoints
-from haku.meta import Chapter, Page
 from haku.provider import Provider
-from typing import List
-from PIL import Image
-import aiohttp
-import json
-import re
-import io
 
 
-def decode(buffer):
-    if not buffer[0] == 69:
-        return buffer
+class ManganeloCom(Provider):
+    """Manganelo.com provider"""
 
-    result = bytearray(len(buffer) + 15)
-    n = len(buffer) + 7
-
-    result[0] = 82  # R
-    result[1] = 73  # I
-    result[2] = 70  # F
-    result[3] = 70  # F
-    result[7] = (n >> 24) & 255
-    result[6] = (n >> 16) & 255
-    result[5] = (n >> 8) & 255
-    result[4] = 255 & n
-    result[8] = 87  # W
-    result[9] = 69  # E
-    result[10] = 66  # B
-    result[11] = 80  # P
-    result[12] = 86  # V
-    result[13] = 80  # P
-    result[14] = 56  # 8
-
-    for i in range(len(buffer)):
-        result[i + 15] = 101 ^ buffer[i]
-
-    return result
-
-
-class MangarockEndpoints(Endpoints):
-
-    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Page:
-        async with session.get(page.url) as response:
-            raw = await response.read()
-            stream = io.BytesIO(decode(raw))
-            image = Image.open(stream)
-            stream.close()
-            return image
-
-
-class Mangarock(Provider):
-    name = 'mangarock'
+    name = 'manganelo.com'
     pattern = r'^https://mangarock.to'
-    endpoints = MangarockEndpoints
 
     async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
@@ -100,4 +53,4 @@ class Mangarock(Provider):
         return pages
 
 
-provider = Mangarock
+provider = ManganeloCom

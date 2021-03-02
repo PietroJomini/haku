@@ -1,3 +1,4 @@
 providers = [
-    'mangarock'
+    'mangarock',
+    'manganelo_com'
 ]

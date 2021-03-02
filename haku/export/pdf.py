@@ -1,11 +1,11 @@
 from PyPDF2 import PdfFileMerger, PdfFileReader
 from typing import Optional, IO, List, Union
 from haku.utils import ensure_bytesio
-from haku.downloader.fs import Reader
 from haku.meta import Chapter, Manga
 from io import BytesIO, RawIOBase
-from pathlib import Path
 from PIL import Image, ImageFile
+from haku.raw.fs import Reader
+from pathlib import Path
 
 
 # TODO(me) Investigate

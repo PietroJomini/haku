@@ -1,9 +1,9 @@
 from typing import Tuple, Type, Union, Callable, List, Generator
 from haku.utils import eventh, write_image, chunks
-from haku.downloader.endpoints import Endpoints
 from haku.meta import Page, Chapter, Manga
-from haku.downloader.fs import FTree
+from haku.raw.endpoints import Endpoints
 from haku.provider import Provider
+from haku.raw.fs import FTree
 from pathlib import Path
 from io import BytesIO
 from PIL import Image

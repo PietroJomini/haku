@@ -1,7 +1,7 @@
-from haku.downloader.endpoints import Endpoints
 from haku.exceptions import NoProviderFound
 from haku.meta import Chapter, Page, Manga
 from aiohttp.client import ClientSession
+from haku.raw.endpoints import Endpoints
 from haku.utils import abstract, eventh
 from typing import List, Optional, Type
 from haku.providers import providers
