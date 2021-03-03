@@ -1,6 +1,7 @@
-from haku.provider import Provider
+from haku.raw.endpoints import Endpoints
+from typing import List, Optional, Dict
 from haku.meta import Chapter, Page
-from typing import List
+from haku.provider import Provider
 import aiohttp
 import re
 
@@ -8,12 +9,27 @@ import re
 # TODO(me) switch images server
 
 
+class ManganeloEndpoints(Endpoints):
+    """Manganelo.com endpoints"""
+
+    # TODO(me) find a more elegant way to share states
+    _chapters_refs = {}
+
+    def get_headers(self, url: str) -> Dict[str, str]:
+        """Get custom headers"""
+
+        if url in self._chapters_refs:
+            return {'Referer': self._chapters_refs[url]}
+
+        return {}
+
+
 class ManganeloCom(Provider):
     """Manganelo.com provider"""
 
     name = 'manganelo.com'
     pattern = r'^https://manganelo.com'
-    enabled = False
+    endpoints = ManganeloEndpoints
 
     async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
@@ -54,6 +70,8 @@ class ManganeloCom(Provider):
                 url=url,
                 index=int(re.search(r'.*\/(\d+)\..*', url).group(1))
             ))
+
+            self.endpoints._chapters_refs[url] = chapter.url
 
         return pages
 
