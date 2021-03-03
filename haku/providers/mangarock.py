@@ -1,7 +1,7 @@
 from haku.raw.endpoints import Endpoints
 from haku.meta import Chapter, Page
 from haku.provider import Provider
-from typing import List
+from typing import List, Dict
 from PIL import Image
 import aiohttp
 import json
@@ -40,7 +40,7 @@ def decode(buffer):
 
 class MangarockEndpoints(Endpoints):
 
-    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Page:
+    async def _page(self, session: aiohttp.ClientSession, page: Page, headers: Dict[str, str]) -> Page:
         async with session.get(page.url) as response:
             raw = await response.read()
             stream = io.BytesIO(decode(raw))

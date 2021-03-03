@@ -1,6 +1,6 @@
-from haku.utils import write_image, eventh
+from haku.utils import write_image, eventh, abstract
+from typing import Tuple, Optional, Dict
 from haku.meta import Page, Chapter
-from typing import Tuple
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
@@ -18,14 +18,13 @@ class Endpoints(eventh.Handler):
         ssl.SSLError
     )
 
-    async def _page(self, session: aiohttp.ClientSession, page: Page) -> Image:
+    async def _page(self, session: aiohttp.ClientSession, page: Page, headers: Dict[str, str]) -> Image:
         """Page downloader async worker"""
 
-        async with session.get(page.url) as response:
+        async with session.get(page.url, headers=headers) as response:
             raw = await response.read()
             stream = BytesIO(raw)
             image = Image.open(stream)
-            stream.close()
             return image
 
     async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
@@ -34,7 +33,8 @@ class Endpoints(eventh.Handler):
         self._d('page', page)
 
         try:
-            image = await self._page(session, page)
+            headers = self.get_headers(page.url)
+            image = await self._page(session, page, headers)
 
         except self.ALLOWED_CONNECTION_ERRORS as err:
             self._d('page.error.allowed', page, err)
@@ -56,3 +56,8 @@ class Endpoints(eventh.Handler):
 
         tasks = (self.page(session, page, path) for page, path in pages)
         await asyncio.gather(*tasks)
+
+    def get_headers(self, url: str) -> Dict[str, str]:
+        """Get custom headers"""
+
+        return {}

@@ -30,6 +30,8 @@
   - [x] allow retry on connection error 
   - [ ] resume, comparing dir tree with serialized yaml (json?)
   - [ ] cloudfare bypass
+    - [ ] investigate!
+    - [x] simple (referer) (!?)
   - [x] allow custom folder structure (customizing an FTree)
 - [ ] manager
   - [ ] query selectors
