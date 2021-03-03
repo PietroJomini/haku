@@ -33,11 +33,11 @@
     - [ ] investigate!
     - [x] simple (referer) (!?)
   - [x] allow custom folder structure (customizing an FTree)
-- [ ] manager
-  - [ ] query selectors
-    - [ ] chapters
-      - [ ] single
-      - [ ] ranges
+- [ ] shelf
+  - [ ] filters
+    - [x] chapter
+      - [x] index
+      - [x] title
     - [ ] volume
 - [ ] storage
   - [x] async follow-up from download
