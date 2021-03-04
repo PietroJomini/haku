@@ -6,3 +6,9 @@ engines:
         enabled: false
       E203:
         enabled: false
+  sonar-python:
+    enabled: true
+  radon:
+    enabled: true
+  bandit:
+    enabled: true
