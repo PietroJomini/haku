@@ -1,18 +1,17 @@
-from typing import Tuple, Type, Union, Callable, List, Generator
-from haku.utils import eventh, write_image, chunks
-from haku.meta import Page, Chapter, Manga
-from haku.raw.endpoints import Endpoints
-from haku.provider import Provider
-from haku.raw.fs import FTree
-from pathlib import Path
-from io import BytesIO
-from PIL import Image
-import aiohttp
 import asyncio
-import ssl
+from pathlib import Path
+from typing import Callable, Type, Union
+
+import aiohttp
+
+from haku.meta import Manga, Page
+from haku.provider import Provider
+from haku.raw.endpoints import Endpoints
+from haku.raw.fs import FTree
+from haku.utils import chunks, eventh
 
 
-class Method():
+class Method:
     """Download methods"""
 
     @staticmethod

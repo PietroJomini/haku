@@ -1,4 +1,5 @@
 from typing import Any, Callable
+
 from haku.utils import call_safe
 
 
@@ -8,7 +9,7 @@ class Handler:
     def _ensure_events(self):
         """Ensure the _events attr"""
 
-        if not hasattr(self, '_events'):
+        if not hasattr(self, "_events"):
             self._events = {}
 
     def on(self, tag: str, event: Callable):

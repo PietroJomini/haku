@@ -71,6 +71,10 @@
 
 ## Code quality
 
+- [x] linting
+  - [x] black
+  - [x] isort
+  - [x] flake8
 - [ ] error handling
   - [x] connection errors while downloading page
 

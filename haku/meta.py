@@ -1,5 +1,6 @@
-from typing import Optional, List, Type
 from dataclasses import dataclass
+from typing import List, Optional, Type
+
 from PIL import Image
 
 

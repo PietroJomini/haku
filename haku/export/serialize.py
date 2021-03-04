@@ -1,9 +1,10 @@
-from haku.meta import Manga
-from typing import Optional
-from pathlib import Path
 import json
-import yaml
+from typing import Optional
+
 import toml
+import yaml
+
+from haku.meta import Manga
 
 
 class Serializer:
@@ -21,31 +22,32 @@ class Serializer:
         )
 
         if self.manga.cover_url is not None:
-            manga_dict['cover_url'] = self.manga.cover_url
+            manga_dict["cover_url"] = self.manga.cover_url
 
         if chapters:
-            manga_dict['chapters'] = []
+            manga_dict["chapters"] = []
             for chapter in self.manga.chapters:
                 chapter_dict = dict(
                     url=chapter.url,
                     index=chapter.index,
                     title=chapter.title,
-                    volume=chapter.volume
+                    volume=chapter.volume,
                 )
 
                 if pages:
-                    chapter_dict['pages'] = []
+                    chapter_dict["pages"] = []
                     for page in chapter._pages:
-                        chapter_dict['pages'].append(dict(
-                            url=page.url,
-                            index=page.index
-                        ))
+                        chapter_dict["pages"].append(
+                            dict(url=page.url, index=page.index)
+                        )
 
-                manga_dict['chapters'].append(chapter_dict)
+                manga_dict["chapters"].append(chapter_dict)
 
         return manga_dict
 
-    def json(self, chapters: bool = True, pages: bool = True, indent: Optional[int] = None):
+    def json(
+        self, chapters: bool = True, pages: bool = True, indent: Optional[int] = None
+    ):
         """Serialize to json"""
 
         return json.dumps(self.to_dict(chapters=chapters, pages=pages), indent=indent)
@@ -55,7 +57,9 @@ class Serializer:
 
         return yaml.dump(self.to_dict(chapters=chapters, pages=pages))
 
-    def toml(self, chapters: bool = True, pages: bool = True, indent: Optional[int] = None):
+    def toml(
+        self, chapters: bool = True, pages: bool = True, indent: Optional[int] = None
+    ):
         """Serialize to yaml"""
 
         return toml.dumps(self.to_dict(chapters=chapters, pages=pages))

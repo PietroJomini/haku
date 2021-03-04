@@ -1,12 +1,14 @@
-from haku.raw.endpoints import Endpoints
-from haku.meta import Chapter, Page
-from haku.provider import Provider
-from typing import List, Dict
-from PIL import Image
-import aiohttp
+import io
 import json
 import re
-import io
+from typing import Dict, List
+
+import aiohttp
+from PIL import Image
+
+from haku.meta import Chapter, Page
+from haku.provider import Provider
+from haku.raw.endpoints import Endpoints
 
 
 def decode(buffer):
@@ -39,8 +41,9 @@ def decode(buffer):
 
 
 class MangarockEndpoints(Endpoints):
-
-    async def _page(self, session: aiohttp.ClientSession, page: Page, headers: Dict[str, str]) -> Page:
+    async def _page(
+        self, session: aiohttp.ClientSession, page: Page, headers: Dict[str, str]
+    ) -> Page:
         async with session.get(page.url) as response:
             raw = await response.read()
             stream = io.BytesIO(decode(raw))
@@ -50,52 +53,50 @@ class MangarockEndpoints(Endpoints):
 
 
 class Mangarock(Provider):
-    name = 'mangarock'
-    pattern = r'^https://mangarock.to'
+    name = "mangarock"
+    pattern = r"^https://mangarock.to"
     endpoints = MangarockEndpoints
 
     async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
-        thumb = page.select('div.thumb div')[0]['style']
-        meta = re.search(r'background-image: url\(\'(.*)\'\);', thumb)
+        thumb = page.select("div.thumb div")[0]["style"]
+        meta = re.search(r"background-image: url\(\'(.*)\'\);", thumb)
         return meta.group(1)
 
     async def fetch_title(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
-        return page.select('div.info h1')[0].text
+        return page.select("div.info h1")[0].text
 
-    async def fetch_chapters(self, session: aiohttp.ClientSession, url: str) -> List[Chapter]:
+    async def fetch_chapters(
+        self, session: aiohttp.ClientSession, url: str
+    ) -> List[Chapter]:
         page = await self.helpers.scrape_and_cook(session, url)
 
         chapters = []
-        for chapter in page.select('div.all-chapers tbody a'):
-            meta = re.search(r'Vol.(\d*) *#(.*): *(.*)', chapter.text)
+        for chapter in page.select("div.all-chapers tbody a"):
+            meta = re.search(r"Vol.(\d*) *#(.*): *(.*)", chapter.text)
 
             volume = meta.group(1) if meta else None
-            index = meta.group(2) if meta else ''
-            title = meta.group(3) if meta else ''
-            url = chapter['href']
+            index = meta.group(2) if meta else ""
+            title = meta.group(3) if meta else ""
+            url = chapter["href"]
 
-            if index != '' and title != '':
-                chapters.append(Chapter(
-                    volume=volume,
-                    index=index,
-                    title=title,
-                    url=url
-                ))
+            if index != "" and title != "":
+                chapters.append(
+                    Chapter(volume=volume, index=index, title=title, url=url)
+                )
 
         return chapters
 
-    async def fetch_pages(self, session: aiohttp.ClientSession, chapter: Chapter) -> List[Page]:
+    async def fetch_pages(
+        self, session: aiohttp.ClientSession, chapter: Chapter
+    ) -> List[Page]:
         page = await self.helpers.scrape_and_cook(session, chapter.url)
 
         pages = []
-        meta = re.search(r'var mangaData = (.*?);', str(page))
+        meta = re.search(r"var mangaData = (.*?);", str(page))
         for index, page in enumerate(json.loads(meta.group(1))):
-            pages.append(Page(
-                url=page['url'],
-                index=index
-            ))
+            pages.append(Page(url=page["url"], index=index))
 
         return pages
 

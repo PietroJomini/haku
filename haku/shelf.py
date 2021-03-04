@@ -1,5 +1,6 @@
-from haku.meta import Chapter, Manga
 from typing import Callable
+
+from haku.meta import Chapter, Manga
 
 
 class Filter:
@@ -45,7 +46,7 @@ class Filter:
     def _not(f):
         """Filter if not f"""
 
-        return ~ f
+        return ~f
 
 
 class Shelf:

@@ -9,9 +9,13 @@
   <br>
   <a href="https://codeclimate.com/github/PietroJomini/haku">
     <img src="https://img.shields.io/codeclimate/maintainability-percentage/PietroJomini/haku"/>
-   <img src="https://img.shields.io/codeclimate/issues/PietroJomini/haku">
   </a>
-  
+  <img src="https://img.shields.io/codeclimate/issues/PietroJomini/haku">
+
+  <a href="https://github.com/psf/black">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg"/>
+  </a>
+
   <br>
   <img src="https://img.shields.io/github/languages/top/PietroJomini/haku"/>
   <img src="https://img.shields.io/github/languages/code-size/PietroJomini/haku"/>

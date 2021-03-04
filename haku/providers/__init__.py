@@ -1,4 +1,1 @@
-providers = [
-    'mangarock',
-    'manganelo_com'
-]
+providers = ["mangarock", "manganelo_com"]
