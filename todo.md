@@ -10,6 +10,7 @@
     - [x] title
     - [x] index
     - [x] volume
+    - [ ] numerical index
   - [x] pages
     - [x] url
     - [x] index
@@ -63,6 +64,26 @@
     - [x] toml
 - [ ] ui
   - [ ] cli
+    - [ ] features
+      - [ ] fetch
+        - [ ] display full info
+          - [ ] meta
+          - [ ] chapters
+            - [ ] index
+            - [ ] title
+            - [ ] url
+            - [ ] volume
+      - [ ] download
+        - [ ] if convert, to temp dir
+      - [ ] convert
+      - [ ] filter
+    - [ ] args
+      - [x] url REQUIRED
+      - [x] path
+      - [x] output format
+      - [x] download batch size
+      - [ ] filters
+      - [x] only fetch
   - [ ] web
 - [ ] providers
   - [x] routing
