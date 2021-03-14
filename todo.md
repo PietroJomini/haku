@@ -78,10 +78,13 @@
       - [ ] convert
       - [ ] filter
     - [ ] args
-      - [x] url REQUIRED
-      - [x] path
-      - [x] output format
-      - [x] download batch size
+      - [ ] common
+        - [x] url REQUIRED
+      - [ ] download
+        - [x] path
+        - [x] output format
+        - [x] download batch size
+      - [ ] info
       - [ ] filters
       - [x] only fetch
   - [ ] web
