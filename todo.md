@@ -64,19 +64,20 @@
     - [x] toml
 - [ ] ui
   - [ ] cli
+    - [ ] allow to disable rich
     - [ ] features
-      - [ ] fetch
-        - [ ] display full info
-          - [ ] meta
-          - [ ] chapters
-            - [ ] index
-            - [ ] title
-            - [ ] url
+      - [x] fetch
+        - [x] display full info
+          - [x] meta
+          - [x] chapters
+            - [x] index
+            - [x] title
+            - [x] url
             - [ ] volume
       - [ ] download
-        - [ ] if convert, to temp dir
-      - [ ] convert
-      - [ ] filter
+        - [ ] convert
+          - [ ] if convert, to temp dir
+        - [ ] filter
     - [ ] args
       - [ ] common
         - [x] url REQUIRED
@@ -84,9 +85,9 @@
         - [x] path
         - [x] output format
         - [x] download batch size
-      - [ ] info
-      - [ ] filters
-      - [x] only fetch
+        - [ ] filters
+      - [x] info
+    - [ ] errors handling
   - [ ] web
 - [ ] providers
   - [x] routing
