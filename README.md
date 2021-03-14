@@ -18,9 +18,8 @@
 
   <br>
   <img src="https://img.shields.io/github/languages/top/PietroJomini/haku"/>
-  <img src="https://img.shields.io/github/languages/code-size/PietroJomini/haku"/>
-  <img src="https://img.shields.io/github/repo-size/PietroJomini/haku"/>
   <img src="https://img.shields.io/tokei/lines/github/PietroJomini/haku"/>
+  <a href="https://trello.com/b/vs0iW5zk"><img src="https://img.shields.io/badge/todos-trello-9cf"/></a>
 </p>
 
 <br>
