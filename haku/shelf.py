@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Callable
 
 from haku.meta import Chapter, Manga
@@ -7,16 +8,42 @@ class Filter:
     """Filters, to be applied to a Shelf instance"""
 
     @staticmethod
-    def chapter_index(*index: str):
-        """Filter chapters based on a set of index"""
+    def title_in(*titles: str):
+        """Filter chapters if title in *titles"""
+
+        return Filter(lambda chapter: chapter.title in titles)
+
+    @staticmethod
+    def index_in(*index: Number):
+        """Filter chapters if index in *index"""
 
         return Filter(lambda chapter: chapter.index in index)
 
     @staticmethod
-    def chapter_title(*titles: str):
-        """Filter chapters based on a set of index"""
+    def index_range(start: Number, end: Number):
+        """Filter chapters if index in [start, end]"""
 
-        return Filter(lambda chapter: chapter.title in titles)
+        return Filter(lambda chapter: start <= chapter.index <= end)
+
+    @staticmethod
+    def has_volume():
+        """Filter chapters if volume is not None"""
+
+        return Filter(lambda chapter: chapter.volume is not None)
+
+    @staticmethod
+    def volume_in(*volumes: Number):
+        """Filter chapters if volume in *volumes"""
+
+        f = Filter(lambda chapter: chapter.volume in volumes)
+        return Filter.has_volume() & f
+
+    @staticmethod
+    def volume_range(start: Number, end: Number):
+        """Filter chapters if volue in [start, end]"""
+
+        f = Filter(lambda chapter: start <= chapter.volume <= end)
+        return Filter.has_volume() & f
 
     def __init__(self, f: Callable[[Chapter], bool]):
         self.f = f
