@@ -1,13 +1,11 @@
-from io import RawIOBase
 from pathlib import Path
-from typing import IO, List, Union
+from typing import List, Tuple
 
-from PIL import ImageFile
+from PIL import Image, ImageFile
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
-from haku.meta import Chapter
-from haku.raw.fs import Reader
-from haku.utils import ensure_bytesio
+from haku.export import Converter
+from haku.meta import Chapter, Page
 
 # TODO(me) Investigate
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -24,29 +22,24 @@ def _merge(pdfs: List[Path]) -> PdfFileMerger:
     return merger
 
 
-def chapter(
-    chapter: Chapter,
-    reader: Reader,
-    out: Union[IO[bytes], Path],
-    pages_suffixes: List[str] = [".png"],
-) -> RawIOBase:
-    """Export chapter to pdf"""
+class Pdf(Converter):
+    """Pdf converter"""
 
-    images = list(
-        map(
-            lambda image: image[1],
-            sorted(reader.chapter(chapter), key=lambda image: image[0].index),
-        )
-    )
+    def _convert_chapter(
+        self, chapter: Chapter, pages: List[Tuple[Page, Image.Image]]
+    ) -> bool:
+        """Convert a chapter"""
 
-    stream, temp = ensure_bytesio(out)
+        images = [image for _, image in pages]
+        out = self.out.chapter(chapter, fmt="{index:g} {title}.pdf")
 
-    images[0].save(
-        stream, format="pdf", save_all=True, append_images=images[1:], resolution=100.0
-    )
+        with out.open("wb") as stream:
+            images[0].save(
+                stream,
+                format="pdf",
+                save_all=True,
+                append_images=images[1:],
+                resolution=100.0,
+            )
 
-    for image in images:
-        image.close()
-
-    if temp:
-        stream.close()
+        return True
