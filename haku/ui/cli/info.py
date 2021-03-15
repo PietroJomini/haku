@@ -1,68 +1,113 @@
 import click
 from rich import box
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Column, Table
 
+from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import route
 
 
-def manga2table(manga: Manga, display_url: bool):
-    """Transpose manga chapters into a rich table"""
+def rich_info(manga: Manga, show_urls: bool):
+    """Create rich table with manga info"""
 
-    table = Table(
+    out = f"Title: [b]{manga.title}[/b]"
+
+    urls = ["", f"Url: {manga.url}\n"]
+    if manga.cover_url is not None:
+        urls.append(f"Cover url: {manga.cover_url}")
+
+    if show_urls:
+        out += "\n".join(urls)
+
+    return Panel.fit(out)
+
+
+def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
+    """Create rich table with chapters"""
+
+    columns = [
+        Column("Volume", justify="right") if show_volumes else None,
         Column("Index", justify="right"),
         Column("Title"),
-        title=manga.title,
-        box=box.ROUNDED,
-    )
+        Column("Url") if show_urls else None,
+    ]
 
-    if display_url:
-        table.add_column("Url", overflow="fold")
+    table = Table(*filter(lambda c: c is not None, columns), box=box.ROUNDED)
 
     for chapter in manga.chapters:
-        if display_url:
-            table.add_row(chapter.index, chapter.title, chapter.url)
-        else:
-            table.add_row(chapter.index, chapter.title)
+        row = [
+            chapter.volume if show_volumes else None,
+            chapter.index,
+            chapter.title,
+            chapter.url if show_urls else None,
+        ]
 
-    return table
-
-
-def info2table(manga, display_url):
-    """Transpose manga info to a table"""
-
-    table = Table("Key", "Value", box=box.ROUNDED)
-
-    table.add_row("Title", manga.title)
-
-    if display_url:
-        table.add_row("Url", manga.url)
-
-    if display_url and manga.cover_url is not None:
-        table.add_row("Cover url", manga.cover_url)
+        table.add_row(*filter(lambda r: r is not None, row))
 
     return table
 
 
 @click.command()
 @click.argument("url")
-@click.option("-u", "--display-url", is_flag=True, help="Display chapters url")
-@click.option("-m", "--manga-meta", is_flag=True, help="Display manga meta")
-def info(url: str, display_url: bool, manga_meta: bool):
+@click.option(
+    "-o",
+    "--out",
+    default="RICH",
+    type=click.Choice(["RICH", "JSON", "TOML", "YAML"], case_sensitive=False),
+    help="Output format",
+    show_default=True,
+)
+@click.option(
+    "-u",
+    "--show-urls",
+    is_flag=True,
+    help="Display url in rich mode",
+)
+@click.option(
+    "-c",
+    "--chapters",
+    is_flag=True,
+    help="Display chapters",
+)
+@click.option(
+    "-v",
+    "--show-volumes",
+    is_flag=True,
+    help="Display chapters volume in rich mode",
+)
+@click.option(
+    "-p",
+    "--pages",
+    is_flag=True,
+    help="Display pages in non-rich modes",
+)
+def info(
+    url: str, out: str, chapters: bool, pages: bool, show_urls: bool, show_volumes: bool
+):
     """TODO(me) better description"""
 
-    console = Console()
-
-    provider = route(url)
-
-    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
+    if out != "RICH":
+        provider = route(url)
         manga = provider.fetch_sync()
+        serializer = Serializer(manga)
 
-    table = (
-        info2table(manga, display_url)
-        if manga_meta
-        else manga2table(manga, display_url)
-    )
+        if out == "JSON":
+            print(serializer.json(indent=4, chapters=chapters, pages=pages))
+        elif out == "TOML":
+            print(serializer.toml(chapters=chapters, pages=pages))
+        elif out == "YAML":
+            print(serializer.yaml(chapters=chapters, pages=pages))
 
-    console.print(table)
+    else:
+        console = Console()
+        with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
+            provider = route(url)
+            manga = provider.fetch_sync()
+
+        console.print(
+            rich_chapters(manga, show_urls, show_volumes)
+            if chapters
+            else rich_info(manga, show_urls)
+        )
