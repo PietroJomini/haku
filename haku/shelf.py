@@ -86,3 +86,10 @@ class Shelf:
         """Apply a filter"""
 
         self.manga.chapters = list(filter(f.f, self.manga.chapters))
+        return self
+
+    def sort(self):
+        """Sort chapters"""
+
+        self.manga.chapters.sort(key=lambda chapter: (chapter.index, chapter.volume))
+        return self

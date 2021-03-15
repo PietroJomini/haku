@@ -7,6 +7,7 @@ from rich.table import Column, Table
 from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import route
+from haku.shelf import Shelf
 
 
 def rich_info(manga: Manga, show_urls: bool):
@@ -104,7 +105,8 @@ def info(
         console = Console()
         with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
             provider = route(url)
-            manga = provider.fetch_sync()
+            shelf = Shelf(provider.fetch_sync())
+            manga = shelf.sort().manga
 
         console.print(
             rich_chapters(manga, show_urls, show_volumes)
