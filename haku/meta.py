@@ -18,9 +18,9 @@ class Chapter:
 
     url: str
     title: str
-    index: str
+    index: float
 
-    volume: Optional[str] = None
+    volume: Optional[float] = None
     _pages: Optional[List[Page]] = None
 
 

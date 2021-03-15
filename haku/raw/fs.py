@@ -12,7 +12,7 @@ class FTree:
     def __init__(self, root: Path, manga: Manga, fmt="{title}"):
         self.root = root / fmt.format(title=manga.title, url=manga.url)
 
-    def chapter(self, chapter: Chapter, fmt="{index} {title}") -> Path:
+    def chapter(self, chapter: Chapter, fmt="{index:g} {title}") -> Path:
         """Build chapter path"""
 
         return self.root / fmt.format(
@@ -20,7 +20,7 @@ class FTree:
         )
 
     def flatten(
-        self, *chapters: Chapter, fmt="{index} {title}"
+        self, *chapters: Chapter, fmt="{index:g} {title}"
     ) -> Generator[Tuple[Page, Path], None, None]:
         """Flatten all pages in a list with the related paths"""
 

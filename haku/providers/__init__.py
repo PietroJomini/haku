@@ -1,1 +1,1 @@
-providers = ["mangarock", "manganelo_com"]
+providers = ["manganelo_com"]

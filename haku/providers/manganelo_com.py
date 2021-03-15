@@ -49,9 +49,9 @@ class ManganeloCom(Provider):
         for chapter in page.select("a.chapter-name"):
             meta = re.search(r"Vol.(\d*) Chapter ([^:]*)(?:: *(.*))?", chapter.text)
 
-            volume = meta.group(1) if meta else None
-            index = meta.group(2) if meta else ""
-            title = meta.group(3) if meta else ""
+            volume = float(meta.group(1))
+            index = float(meta.group(2))
+            title = meta.group(3)
             url = chapter["href"]
 
             chapters.append(Chapter(volume=volume, index=index, title=title, url=url))

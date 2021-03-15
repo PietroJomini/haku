@@ -38,8 +38,8 @@ def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
 
     for chapter in manga.chapters:
         row = [
-            chapter.volume if show_volumes else None,
-            chapter.index,
+            f"{chapter.volume:g}" if show_volumes else None,
+            f"{chapter.index:g}",
             chapter.title,
             chapter.url if show_urls else None,
         ]
