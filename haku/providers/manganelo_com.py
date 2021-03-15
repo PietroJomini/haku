@@ -47,7 +47,7 @@ class ManganeloCom(Provider):
 
         chapters = []
         for chapter in page.select("a.chapter-name"):
-            meta = re.search(r"Vol.(\d*) Chapter (.*): *(.*)", chapter.text)
+            meta = re.search(r"Vol.(\d*) Chapter ([^:]*)(?:: *(.*))?", chapter.text)
 
             volume = meta.group(1) if meta else None
             index = meta.group(2) if meta else ""
