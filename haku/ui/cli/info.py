@@ -7,7 +7,7 @@ from rich.table import Column, Table
 from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import route
-from haku.shelf import Shelf
+from haku.shelf import Shelf, StringifiedFilter
 
 
 def rich_info(manga: Manga, show_urls: bool):
@@ -50,6 +50,20 @@ def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
     return table
 
 
+def prepare_manga(manga: Manga, filters: str, sort: bool = False) -> Manga:
+    """Prepare th emanga with a shelf"""
+
+    shelf = Shelf(manga)
+
+    if filters != "":
+        shelf.filter(StringifiedFilter.parse(filters))
+
+    if sort:
+        shelf.sort()
+
+    return shelf.manga
+
+
 @click.command()
 @click.argument("url")
 @click.option(
@@ -84,14 +98,26 @@ def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
     is_flag=True,
     help="Display pages in non-rich modes",
 )
+@click.option(
+    "-f",
+    "--apply-filter",
+    default="",
+    help="Apply stringified filter",
+)
 def info(
-    url: str, out: str, chapters: bool, pages: bool, show_urls: bool, show_volumes: bool
+    url: str,
+    out: str,
+    chapters: bool,
+    pages: bool,
+    show_urls: bool,
+    show_volumes: bool,
+    apply_filter: str,
 ):
     """TODO(me) better description"""
 
     if out != "RICH":
         provider = route(url)
-        manga = provider.fetch_sync()
+        manga = prepare_manga(provider.fetch_sync(), apply_filter)
         serializer = Serializer(manga)
 
         if out == "JSON":
@@ -105,8 +131,7 @@ def info(
         console = Console()
         with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
             provider = route(url)
-            shelf = Shelf(provider.fetch_sync())
-            manga = shelf.sort().manga
+            manga = prepare_manga(provider.fetch_sync(), apply_filter, True)
 
         console.print(
             rich_chapters(manga, show_urls, show_volumes)
