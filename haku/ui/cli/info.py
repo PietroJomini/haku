@@ -50,13 +50,14 @@ def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
     return table
 
 
-def prepare_manga(manga: Manga, filters: str, sort: bool = False) -> Manga:
+def prepare_manga(manga: Manga, filters: str, ignore: str, sort: bool = False) -> Manga:
     """Prepare th emanga with a shelf"""
 
     shelf = Shelf(manga)
 
     if filters != "":
         shelf.filter(StringifiedFilter.parse(filters))
+        shelf.filter(~StringifiedFilter.parse(ignore))
 
     if sort:
         shelf.sort()
@@ -104,6 +105,12 @@ def prepare_manga(manga: Manga, filters: str, sort: bool = False) -> Manga:
     default="",
     help="Apply stringified filter",
 )
+@click.option(
+    "-i",
+    "--ignore",
+    default="",
+    help="Ignore from stringified filter",
+)
 def info(
     url: str,
     out: str,
@@ -112,12 +119,13 @@ def info(
     show_urls: bool,
     show_volumes: bool,
     apply_filter: str,
+    ignore: str,
 ):
     """TODO(me) better description"""
 
     if out != "RICH":
         provider = route(url)
-        manga = prepare_manga(provider.fetch_sync(), apply_filter)
+        manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore)
         serializer = Serializer(manga)
 
         if out == "JSON":
@@ -131,7 +139,7 @@ def info(
         console = Console()
         with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
             provider = route(url)
-            manga = prepare_manga(provider.fetch_sync(), apply_filter, True)
+            manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore, True)
 
         console.print(
             rich_chapters(manga, show_urls, show_volumes)
