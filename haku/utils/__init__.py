@@ -1,7 +1,15 @@
+import tempfile
 from pathlib import Path
 from typing import IO, Any, Callable, Union
 
 from PIL import Image
+
+
+def tmpdir(tmpname: str = "haku") -> Path:
+    """Geenrate a temporary directory"""
+
+    tempfile.mkdtemp()
+    return Path(tempfile.gettempdir()) / tmpname
 
 
 def call_safe(cb: Callable, *args, **argv) -> Any:

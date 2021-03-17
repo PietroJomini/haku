@@ -1,14 +1,15 @@
 import asyncio
 from pathlib import Path
-from typing import Callable, Type, Union
+from typing import Callable, Optional, Union
 
 import aiohttp
 
-from haku.meta import Manga, Page
+from haku.meta import Manga
 from haku.provider import Provider
 from haku.raw.endpoints import Endpoints
 from haku.raw.fs import FTree
-from haku.utils import chunks, eventh
+from haku.shelf import Shelf
+from haku.utils import chunks, eventh, tmpdir
 
 
 class Method:
@@ -31,25 +32,25 @@ class Method:
 class Downloader(eventh.Handler):
     """Downloader"""
 
-    RATE_LIMIT: int = 200
-    endpoints: Type[Endpoints] = Endpoints
+    def __init__(
+        self,
+        endp: Union[Endpoints, Provider],
+        manga: Union[Manga, Shelf],
+        root: Optional[Union[Path, FTree]] = tmpdir(),
+    ):
+        self.endpoints = endp if isinstance(endp, Endpoints) else endp.endpoints()
+        self.manga = manga if isinstance(manga, Manga) else manga.manga
+        self.tree = root if isinstance(root, FTree) else FTree(root, self.manga)
 
-    @staticmethod
-    def from_provider(provider: Provider, manga: Manga, root: Union[Path, FTree]):
-        """Instantiate a downloader from a provider"""
-
-        return Downloader(provider.endpoints(), manga, root)
-
-    def __init__(self, endpoints: Endpoints, manga: Manga, root: Union[Page, FTree]):
-        self.tree = root if isinstance(root, FTree) else FTree(root, manga)
-        self.endpoints = endpoints
-        self.manga = manga
-
-    def download(self, method: Callable = Method.batch()):
-        """Download the manga following the preferred method"""
+    def download(
+        self,
+        method: Callable = Method.batch(),
+        rate_limit: int = 200,
+    ):
+        """Download the manga with the given method"""
 
         async def runner():
-            async with asyncio.Semaphore(self.RATE_LIMIT):
+            async with asyncio.Semaphore(rate_limit):
                 await method(self.endpoints, self.tree, self.manga)
 
         asyncio.run(runner())

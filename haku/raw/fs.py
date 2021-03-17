@@ -1,5 +1,4 @@
 import shutil
-import tempfile
 from pathlib import Path
 from typing import Generator, Tuple
 
@@ -10,18 +9,6 @@ from haku.meta import Chapter, Manga, Page
 
 class FTree:
     """Folders tree builder"""
-
-    @staticmethod
-    def tmp(manga: Manga, fmt="{title}", tmpname: str = "haku"):
-        """Generate a tree in a tmp directory"""
-
-        tempfile.mkdtemp()
-        tmppath = Path(tempfile.gettempdir()) / tmpname
-
-        tree = FTree(tmppath, manga, fmt=fmt)
-        tree._is_tmp = True
-
-        return tree
 
     def __init__(self, root: Path, manga: Manga, fmt="{title}"):
         self.root = root / fmt.format(title=manga.title, url=manga.url)
