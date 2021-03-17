@@ -36,6 +36,12 @@ class FTree:
 
         shutil.rmtree(self.root)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.cleanup()
+
 
 class Reader:
     """Folder tree reader"""

@@ -5,16 +5,22 @@ from PIL import Image
 
 from haku.meta import Chapter, Manga, Page
 from haku.raw.fs import FTree, Reader
+from haku.shelf import Shelf
 from haku.utils import abstract, eventh
 
 
 class Converter(eventh.Handler):
     """Convert manga"""
 
-    def __init__(self, manga: Manga, reader: Reader, out: Union[FTree, Path]):
-        self.out = out if isinstance(out, FTree) else FTree(out, manga)
-        self.manga = manga
-        self.reader = reader
+    def __init__(
+        self,
+        manga: Union[Manga, Shelf],
+        reader: Union[Reader, FTree],
+        out: Union[FTree, Path],
+    ):
+        self.manga = manga if isinstance(manga, Manga) else manga.manga
+        self.out = out if isinstance(out, FTree) else FTree(out, self.manga)
+        self.reader = reader if isinstance(reader, Reader) else Reader(reader)
 
     def convert(self):
         """Convert a manga"""

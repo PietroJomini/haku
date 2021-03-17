@@ -46,7 +46,7 @@ class Downloader(eventh.Handler):
         self,
         method: Callable = Method.batch(),
         rate_limit: int = 200,
-    ):
+    ) -> FTree:
         """Download the manga with the given method"""
 
         async def runner():
@@ -54,3 +54,5 @@ class Downloader(eventh.Handler):
                 await method(self.endpoints, self.tree, self.manga)
 
         asyncio.run(runner())
+
+        return self.tree
