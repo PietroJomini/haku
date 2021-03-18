@@ -33,14 +33,14 @@ class Chapter:
     index: float
 
     volume: Optional[float] = None
-    _pages: Optional[List[Page]] = None
+    pages: Optional[List[Page]] = None
 
     def as_dict(self, add_pages: bool = True) -> Dict:
         """Serialize into a `dict`"""
 
         pages = (
-            [page.as_dict() for page in self._pages]
-            if add_pages and self._pages is not None
+            [page.as_dict() for page in self.pages]
+            if add_pages and self.pages is not None
             else None
         )
 
@@ -67,7 +67,7 @@ class Chapter:
             title=src["title"],
             index=src["index"],
             volume=src["volume"],
-            _pages=pages,
+            pages=pages,
         )
 
 

@@ -58,7 +58,7 @@ class FTree:
 
         for chapter in chapters:
             path = self.chapter(chapter, fmt=fmt)
-            for page in chapter._pages:
+            for page in chapter.pages:
                 yield page, path
 
     def __enter__(self):

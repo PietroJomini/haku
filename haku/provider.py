@@ -112,7 +112,7 @@ class Provider(eventh.Handler):
 
             manga.chapters = [
                 Chapter(
-                    url=c.url, index=c.index, title=c.title, volume=c.volume, _pages=p
+                    url=c.url, index=c.index, title=c.title, volume=c.volume, pages=p
                 )
                 for c, p in zip(chapters_meta, pages)
             ]
