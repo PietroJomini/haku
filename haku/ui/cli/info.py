@@ -70,7 +70,7 @@ def prepare_manga(manga: Manga, filters: str, ignore: str, sort: bool = False) -
     "-o",
     "--out",
     default="RICH",
-    type=click.Choice(["RICH", "JSON", "TOML", "YAML"], case_sensitive=False),
+    type=click.Choice(["RICH", "YAML"], case_sensitive=False),
     help="Output format",
     show_default=True,
 )
@@ -122,23 +122,20 @@ def info(
 ):
     """TODO(me) better description"""
 
-    if out != "RICH":
+    if out == "YAML":
         provider = route(url)
         manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore)
+        print(manga.yaml(chapters, pages))
+        return
 
-        if out == "JSON":
-            print(manga.json(chapters, pages, 4))
-        elif out == "YAML":
-            print(manga.yaml(chapters, pages))
+    console = Console()
 
-    else:
-        console = Console()
-        with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
-            provider = route(url)
-            manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore, True)
+    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
+        provider = route(url)
+        manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore, True)
 
-        console.print(
-            rich_chapters(manga, show_urls, show_volumes)
-            if chapters
-            else rich_info(manga, show_urls)
-        )
+    console.print(
+        rich_chapters(manga, show_urls, show_volumes)
+        if chapters
+        else rich_info(manga, show_urls)
+    )
