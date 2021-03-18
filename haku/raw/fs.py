@@ -1,18 +1,50 @@
-import shutil
 from pathlib import Path
-from typing import Generator, Tuple
+from typing import Generator, Tuple, Union
 
 from PIL import Image
 
+from haku.export.serialize import Serializer
 from haku.meta import Chapter, Manga, Page
+from haku.utils import cleanup_folder
+
+
+class Dotman:
+    """Dotfile manager"""
+
+    def __init__(self, root: Path, name=".haku"):
+        self.name = name
+        self.root = root
+
+    def dump(self, manga: Manga):
+        """Dump serialized manga to dotfile"""
+
+        self.root.mkdir(parents=True, exist_ok=True)
+        path = self.root / self.name
+
+        serializer = Serializer(manga)
+        with path.open("w") as dotfile:
+            dotfile.write(serializer.yaml())
 
 
 class FTree:
     """Folders tree builder"""
 
-    def __init__(self, root: Path, manga: Manga, fmt="{title}"):
+    def __init__(
+        self,
+        root: Path,
+        manga: Manga,
+        fmt="{title}",
+        dotman: Union[str, Dotman] = ".haku",
+    ):
         self.root = root / fmt.format(title=manga.title, url=manga.url)
-        self._is_tmp = False
+        self.dotman = (
+            dotman
+            if isinstance(dotman, Dotman)
+            else Dotman(
+                self.root,
+                name=dotman,
+            )
+        )
 
     def chapter(self, chapter: Chapter, fmt="{index:g} {title}") -> Path:
         """Build chapter path"""
@@ -31,16 +63,11 @@ class FTree:
             for page in chapter._pages:
                 yield page, path
 
-    def cleanup(self):
-        """Cleanup root tree"""
-
-        shutil.rmtree(self.root)
-
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, tb):
-        self.cleanup()
+    def __exit__(self, *_):
+        cleanup_folder(self.root)
 
 
 class Reader:

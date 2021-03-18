@@ -4,6 +4,7 @@ from typing import Callable, Optional, Union
 
 import aiohttp
 
+from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import Provider
 from haku.raw.endpoints import Endpoints
@@ -46,8 +47,12 @@ class Downloader(eventh.Handler):
         self,
         method: Callable = Method.batch(),
         rate_limit: int = 200,
+        setup_recovery_plan: bool = True,
     ) -> FTree:
         """Download the manga with the given method"""
+
+        if setup_recovery_plan:
+            self.tree.dotman.dump(self.manga)
 
         async def runner():
             async with asyncio.Semaphore(rate_limit):

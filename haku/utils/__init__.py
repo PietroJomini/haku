@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 from typing import IO, Any, Callable, Union
@@ -57,3 +58,9 @@ def ensure_bytesio(
         return candidate.open(mode), True
 
     return candidate, False
+
+
+def cleanup_folder(folder: Path):
+    """Cleanup a folder"""
+
+    shutil.rmtree(folder)
