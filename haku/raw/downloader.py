@@ -4,7 +4,6 @@ from typing import Callable, Optional, Union
 
 import aiohttp
 
-from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import Provider
 from haku.raw.endpoints import Endpoints

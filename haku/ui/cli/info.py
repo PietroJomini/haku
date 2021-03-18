@@ -4,7 +4,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Column, Table
 
-from haku.export.serialize import Serializer
 from haku.meta import Manga
 from haku.provider import route
 from haku.shelf import Shelf, StringifiedFilter
@@ -126,14 +125,11 @@ def info(
     if out != "RICH":
         provider = route(url)
         manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore)
-        serializer = Serializer(manga)
 
         if out == "JSON":
-            print(serializer.json(indent=4, chapters=chapters, pages=pages))
-        elif out == "TOML":
-            print(serializer.toml(chapters=chapters, pages=pages))
+            print(manga.json(chapters, pages, 4))
         elif out == "YAML":
-            print(serializer.yaml(chapters=chapters, pages=pages))
+            print(manga.yaml(chapters, pages))
 
     else:
         console = Console()

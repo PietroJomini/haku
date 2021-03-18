@@ -3,7 +3,6 @@ from typing import Generator, Tuple, Union
 
 from PIL import Image
 
-from haku.export.serialize import Serializer
 from haku.meta import Chapter, Manga, Page
 from haku.utils import cleanup_folder
 
@@ -21,9 +20,8 @@ class Dotman:
         self.root.mkdir(parents=True, exist_ok=True)
         path = self.root / self.name
 
-        serializer = Serializer(manga)
         with path.open("w") as dotfile:
-            dotfile.write(serializer.yaml())
+            dotfile.write(manga.yaml())
 
 
 class FTree:
