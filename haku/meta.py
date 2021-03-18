@@ -128,5 +128,5 @@ class Manga:
     def from_yaml(src: str):
         """Parse a yaml string into a Manga object"""
 
-        dictified = yaml.load(src, Loader=yaml.FullLoader)
+        dictified = yaml.safe_load(src)
         return Manga.from_dict(dictified)
