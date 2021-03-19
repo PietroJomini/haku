@@ -31,26 +31,26 @@ class Endpoints(eventh.Handler):
     async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
         """Download and write a page to disk"""
 
-        self._d("page", page)
+        self.dispatch("page", page)
 
         try:
             headers = self.get_headers(page.url)
             image = await self._page(session, page, headers)
 
         except self.ALLOWED_CONNECTION_ERRORS as err:
-            self._d("page.error.allowed", page, err)
+            self.dispatch("page.error.allowed", page, err)
             if self.RETRY_ON_CONNECTION_ERROR:
                 return await self.page(session, page, path)
 
         except Exception as err:
-            self._d("page.error.not_allowed", page, err)
+            self.dispatch("page.error.not_allowed", page, err)
 
         else:
-            self._d("page.write", page)
+            self.dispatch("page.write", page)
             write_image(image, path, page.index)
 
         finally:
-            self._d("page.end", page)
+            self.dispatch("page.end", page)
 
     async def pages(self, session: aiohttp.ClientSession, *pages: Tuple[Page, Path]):
         """Download a d write pages to disk"""

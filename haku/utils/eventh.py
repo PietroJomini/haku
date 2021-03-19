@@ -1,32 +1,74 @@
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 from haku.utils import call_safe
 
 
 class Handler:
-    """Basic event handler"""
+    """Event handler"""
 
-    def _ensure_events(self):
-        """Ensure the _events attr"""
+    K_SEP: str = "."
+    K_END: str = "end"
 
-        if not hasattr(self, "_events"):
-            self._events = {}
+    def __init__(self):
+        self.events: Dict[str, List[Callable]] = dict()
 
-    def on(self, tag: str, event: Callable):
+    def __init_subclass__(cls):
+        cls.events: Dict[str, List[Callable]] = dict()
+
+    def mkkey(self, key: str):
+        """Ensure the presence of a key"""
+
+        if key not in self.events:
+            self.events[key] = []
+
+    def on(self, key: str, event: Callable):
         """Register an event"""
 
-        self._ensure_events()
-        self._events[tag] = event
+        self.mkkey(key)
+        self.events[key].append(event)
+
         return self
 
-    def dispatch(self, tag: str, *args, **argv) -> Any:
+    def dispatch(self, key: str, *args: Any, **kwargs: Any):
         """Dispatch an event"""
 
-        self._ensure_events()
-        cb = self._events[tag] if tag in self._events else None
-        return call_safe(cb, *args, **argv)
+        self.mkkey(key)
+        for event in self.events[key]:
+            call_safe(event, *args, **kwargs)
 
-    def _d(self, tag: str, *args, **argv):
-        """Dispatch an event"""
+        return self
 
-        return self.dispatch(tag, *args, **argv)
+    def ping(self, key: str, cbk: Callable = print):
+        """Ping an event"""
+
+        return self.on(key, lambda *_: cbk(key))
+
+    @classmethod
+    def event(cls, key: str, endkey: Optional[str] = None):
+        """Class decorator to create an event from a method"""
+
+        endkey = endkey if endkey is not None else f"{key}{cls.K_SEP}{cls.K_END}"
+
+        def decorator(cbk):
+            """Internal decorator"""
+
+            def wrapper(self: Handler, *args, **kwargs):
+                """Actual wrapper"""
+
+                self.dispatch(key, *args, **kwargs)
+                cbk(self, *args, **kwargs)
+                self.dispatch(endkey, *args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    def listener(self, key: str):
+        """Decorator to create a listener from a method"""
+
+        def decorator(cbk):
+            """Internal decorator"""
+
+            self.on(key, cbk)
+
+        return decorator

@@ -9,7 +9,7 @@ from haku.provider import Provider
 from haku.raw.endpoints import Endpoints
 from haku.raw.fs import FTree
 from haku.shelf import Shelf
-from haku.utils import chunks, eventh, tmpdir
+from haku.utils import chunks, tmpdir
 
 
 class Method:
@@ -29,7 +29,7 @@ class Method:
         return method
 
 
-class Downloader(eventh.Handler):
+class Downloader:
     """Downloader"""
 
     def __init__(

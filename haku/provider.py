@@ -86,10 +86,10 @@ class Provider(eventh.Handler):
 
         async with aiohttp.ClientSession() as session:
 
-            self._d("fetch.title")
+            self.dispatch("title")
             title = await self.fetch_title(session, self.url)
 
-            self._d("fetch.cover")
+            self.dispatch("cover")
             cover_url = await self.fetch_cover_url(session, self.url)
             cover = (
                 await self.fetch_cover(session, cover_url)
@@ -99,10 +99,10 @@ class Provider(eventh.Handler):
 
             manga = Manga(title=title, url=self.url, cover_url=cover_url, cover=cover)
 
-            self._d("fetch.chapters")
+            self.dispatch("chapters")
             chapters_meta = await self.fetch_chapters(session, self.url)
 
-            self._d("fetch.pages")
+            self.dispatch("pages")
             pages = await asyncio.gather(
                 *(
                     asyncio.ensure_future(self.fetch_pages(session, chapter))
