@@ -32,15 +32,15 @@ class ManganeloCom(Provider):
     pattern = r"^https://manganelo.com"
     endpoints = ManganeloEndpoints
 
-    async def fetch_cover_url(self, session: aiohttp.ClientSession, url: str):
+    async def _fetch_cover(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         return page.select("span.info-image img")[0]["src"]
 
-    async def fetch_title(self, session: aiohttp.ClientSession, url: str):
+    async def _fetch_title(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         return page.select("div.story-info-right h1")[0].text
 
-    async def fetch_chapters(
+    async def _fetch_chapters(
         self, session: aiohttp.ClientSession, url: str
     ) -> List[Chapter]:
         page = await self.helpers.scrape_and_cook(session, url)
@@ -58,7 +58,7 @@ class ManganeloCom(Provider):
 
         return chapters
 
-    async def fetch_pages(
+    async def _fetch_pages(
         self, session: aiohttp.ClientSession, chapter: Chapter
     ) -> List[Page]:
         page = await self.helpers.scrape_and_cook(session, chapter.url)

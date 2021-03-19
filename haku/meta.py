@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional
 
 import yaml
-from PIL import Image
 
 
 @dataclass
@@ -78,8 +77,7 @@ class Manga:
     url: str
     title: str
 
-    cover_url: Optional[str] = None
-    cover: Optional[Type[Image.Image]] = None
+    cover: Optional[str] = None
     chapters: Optional[List[Chapter]] = None
 
     def as_dict(self, add_chapters: bool = True, add_pages: bool = True) -> Dict:
@@ -94,7 +92,7 @@ class Manga:
         return dict(
             url=self.url,
             title=self.title,
-            cover_url=self.cover_url,
+            cover=self.cover,
             chapters=chapters,
         )
 
@@ -120,7 +118,7 @@ class Manga:
         return Manga(
             url=src["url"],
             title=src["title"],
-            cover_url=src["cover_url"],
+            cover=src["cover"],
             chapters=chapters,
         )
 

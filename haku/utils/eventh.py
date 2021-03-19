@@ -56,8 +56,32 @@ class Handler:
                 """Actual wrapper"""
 
                 self.dispatch(key, *args, **kwargs)
-                cbk(self, *args, **kwargs)
+                res = cbk(self, *args, **kwargs)
                 self.dispatch(endkey, *args, **kwargs)
+
+                return res
+
+            return wrapper
+
+        return decorator
+
+    @classmethod
+    def async_event(cls, key: str, endkey: Optional[str] = None):
+        """Class decorator to create an event from a method"""
+
+        endkey = endkey if endkey is not None else f"{key}{cls.K_SEP}{cls.K_END}"
+
+        def decorator(cbk):
+            """Internal decorator"""
+
+            async def wrapper(self: Handler, *args, **kwargs):
+                """Actual wrapper"""
+
+                self.dispatch(key, *args, **kwargs)
+                res = await cbk(self, *args, **kwargs)
+                self.dispatch(endkey, *args, **kwargs)
+
+                return res
 
             return wrapper
 

@@ -2,7 +2,7 @@ import asyncio
 import re
 from importlib import import_module
 from io import BytesIO
-from typing import List, Optional, Type
+from typing import List, Type
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -77,77 +77,89 @@ class Provider(eventh.Handler):
         self.helpers = Helpers()
 
     def fetch_sync(self) -> Manga:
-        """Fetch chapters"""
+        """Fetch the manga"""
 
         return asyncio.run(self.fetch())
 
     async def fetch(self) -> Manga:
-        """Fetch manga"""
+        """Fetch the manga"""
 
         async with aiohttp.ClientSession() as session:
 
-            self.dispatch("title")
-            title = await self.fetch_title(session, self.url)
-
-            self.dispatch("cover")
-            cover_url = await self.fetch_cover_url(session, self.url)
-            cover = (
-                await self.fetch_cover(session, cover_url)
-                if cover_url is not None
-                else None
+            chapters_partials = await self.fetch_chapters(session, self.url)
+            pages_futures = (
+                asyncio.ensure_future(self.fetch_pages(session, chapter))
+                for chapter in chapters_partials
             )
 
-            manga = Manga(title=title, url=self.url, cover_url=cover_url, cover=cover)
-
-            self.dispatch("chapters")
-            chapters_meta = await self.fetch_chapters(session, self.url)
-
-            self.dispatch("pages")
-            pages = await asyncio.gather(
-                *(
-                    asyncio.ensure_future(self.fetch_pages(session, chapter))
-                    for chapter in chapters_meta
-                )
-            )
-
-            manga.chapters = [
+            chapters = [
                 Chapter(
-                    url=c.url, index=c.index, title=c.title, volume=c.volume, pages=p
+                    url=c.url,
+                    title=c.title,
+                    index=c.index,
+                    volume=c.volume,
+                    pages=p,
                 )
-                for c, p in zip(chapters_meta, pages)
+                for c, p in zip(
+                    chapters_partials,
+                    await asyncio.gather(*pages_futures),
+                )
             ]
 
-            return manga
+            return Manga(
+                title=await self.fetch_title(session, self.url),
+                cover=await self.fetch_cover(session, self.url),
+                chapters=chapters,
+                url=self.url,
+            )
+
+    @eventh.Handler.async_event("title")
+    async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
+        """Retrieve title"""
+
+        return await self._fetch_title(session, url)
 
     @abstract
+    async def _fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
+        """Custom provider API :: Retrieve title"""
+
+    @eventh.Handler.async_event("cover")
+    async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> str:
+        """Retrieve cover"""
+
+        return await self._fetch_cover(session, url)
+
+    @abstract
+    async def _fetch_cover(self, session: aiohttp.ClientSession, url: str) -> str:
+        """Custom provider API :: Retrieve cover"""
+
+    @eventh.Handler.async_event("chapters")
     async def fetch_chapters(
         self, session: aiohttp.ClientSession, url: str
     ) -> List[Chapter]:
         """Retrieve chapters list"""
 
+        return await self._fetch_chapters(session, url)
+
     @abstract
+    async def _fetch_chapters(
+        self, session: aiohttp.ClientSession, url: str
+    ) -> List[Chapter]:
+        """Custom provider API :: Retrieve chapters list"""
+
+    @eventh.Handler.async_event("pages")
     async def fetch_pages(
         self, session: aiohttp.ClientSession, chapter: Chapter
     ) -> List[Page]:
-        """Retrieve chapter pages"""
+        """Retrieve pages list"""
+
+        return await self._fetch_pages(session, chapter)
 
     @abstract
-    async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
-        """Retrieve manga title"""
-
-    async def fetch_cover_url(
-        self, session: aiohttp.ClientSession, url: str
-    ) -> Optional[str]:
-        """Retrieve manga cover"""
-
-        return None
-
-    async def fetch_cover(
-        self, session: aiohttp.ClientSession, url: str
-    ) -> Optional[Type[Image.Image]]:
-        """Retrieve manga cover"""
-
-        return await self.helpers.fetch_image(session, url)
+    async def _fetch_pages(
+        self, session: aiohttp.ClientSession, chapter: Chapter
+    ) -> List[Page]:
+        """Custom provider API :: Retrieve pages list"""
 
 
 def route(r: str) -> Type[Provider]:
