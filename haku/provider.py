@@ -73,6 +73,8 @@ class Provider:
     enabled: bool = True
     endpoints: Type[Endpoints] = Endpoints
 
+    re_chapter_title: str = r""
+
     def __init__(self):
         self.helpers = Helpers()
 

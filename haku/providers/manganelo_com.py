@@ -32,6 +32,10 @@ class ManganeloCom(Provider):
     pattern = r"^https://manganelo.com"
     endpoints = ManganeloEndpoints
 
+    re_chapter_title = (
+        r"(?:Vol.(?P<volume>(.*)) )?Chapter (?P<index>[^\n:]*)(?:: *(?P<title>.*))?"
+    )
+
     async def fetch_cover(self, session: aiohttp.ClientSession, url: str):
         page = await self.helpers.scrape_and_cook(session, url)
         return page.select("span.info-image img")[0]["src"]
@@ -47,12 +51,14 @@ class ManganeloCom(Provider):
 
         chapters = []
         for chapter in page.select("a.chapter-name"):
-            meta = re.search(r"Vol.(\d*) Chapter ([^:]*)(?:: *(.*))?", chapter.text)
+            meta = re.search(self.re_chapter_title, chapter.text)
 
-            volume = float(meta.group(1))
-            index = float(meta.group(2))
-            title = meta.group(3)
+            index = float(meta.group("index"))
+            title = meta.group("title") or ""
             url = chapter["href"]
+            volume = meta.group("volume")
+            if volume is not None:
+                volume = float(volume)
 
             chapters.append(Chapter(volume=volume, index=index, title=title, url=url))
 
