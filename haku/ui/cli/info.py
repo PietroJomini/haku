@@ -124,8 +124,8 @@ def prepare_manga(
     "-r",
     "--re",
     default="",
-    help='Regex used to parse the title. Must include the named groups: "title", \
-        and can include the named groups: ["volume", "chapter"]',
+    help='Regex used to parse the title. Must include the named groups: "index", '
+    + 'and can include the named groups: ["volume", "title"]',
 )
 def info(
     url: str,
