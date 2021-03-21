@@ -177,7 +177,7 @@ class Scraper(eventh.Handler):
         return await self.provider.fetch_pages(session, chapter)
 
 
-def route(url: str) -> Type[Provider]:
+def route(url: str) -> Scraper:
     """Try to match a provider from the enabled providers"""
 
     for provider in providers:
