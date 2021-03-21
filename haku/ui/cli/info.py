@@ -5,8 +5,8 @@ from rich.panel import Panel
 from rich.table import Column, Table
 
 from haku.meta import Manga
-from haku.provider import route
-from haku.shelf import Shelf, StringifiedFilter
+from haku.provider import Scraper, route
+from haku.shelf import StringifiedFilter
 
 
 def rich_info(manga: Manga, show_urls: bool):
@@ -15,8 +15,8 @@ def rich_info(manga: Manga, show_urls: bool):
     out = f"Title: [b]{manga.title}[/b]"
 
     urls = ["", f"Url: {manga.url}\n"]
-    if manga.cover_url is not None:
-        urls.append(f"Cover url: {manga.cover_url}")
+    if manga.cover is not None:
+        urls.append(f"Cover url: {manga.cover}")
 
     if show_urls:
         out += "\n".join(urls)
@@ -49,14 +49,24 @@ def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
     return table
 
 
-def prepare_manga(manga: Manga, filters: str, ignore: str, sort: bool = False) -> Manga:
+def prepare_manga(
+    scraper: Scraper,
+    re: str,
+    filters: str,
+    ignore: str,
+    sort: bool,
+    pages: bool,
+) -> Manga:
     """Prepare th emanga with a shelf"""
 
-    shelf = Shelf(manga)
+    if re != "":
+        scraper.provider.re_chapter_title = re
 
     if filters != "":
-        shelf.filter(StringifiedFilter.parse(filters))
-        shelf.filter(~StringifiedFilter.parse(ignore))
+        f = StringifiedFilter.parse(filters) & ~StringifiedFilter.parse(ignore)
+        shelf = scraper.fetch_sync(f, fetch_pages=pages)
+    else:
+        shelf = scraper.fetch_sync(fetch_pages=pages)
 
     if sort:
         shelf.sort()
@@ -110,6 +120,13 @@ def prepare_manga(manga: Manga, filters: str, ignore: str, sort: bool = False) -
     default="",
     help="Ignore from stringified filter",
 )
+@click.option(
+    "-r",
+    "--re",
+    default="",
+    help='Regex used to parse the title. Must include the named groups: "title", \
+        and can include the named groups: ["volume", "chapter"]',
+)
 def info(
     url: str,
     out: str,
@@ -119,20 +136,21 @@ def info(
     show_volumes: bool,
     apply_filter: str,
     ignore: str,
+    re: str,
 ):
     """TODO(me) better description"""
 
     if out == "YAML":
-        provider = route(url)
-        manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore)
+        scraper = route(url)
+        manga = prepare_manga(scraper, re, apply_filter, ignore, False, pages)
         print(manga.yaml(chapters, pages))
         return
 
     console = Console()
 
     with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
-        provider = route(url)
-        manga = prepare_manga(provider.fetch_sync(), apply_filter, ignore, True)
+        scraper = route(url)
+        manga = prepare_manga(scraper, re, apply_filter, ignore, True, False)
 
     console.print(
         rich_chapters(manga, show_urls, show_volumes)
