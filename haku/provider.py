@@ -114,12 +114,20 @@ class Scraper(eventh.Handler):
         self.url = url
         self.provider = provider
 
-    def fetch_sync(self, f: Optional[Filter] = None) -> Shelf:
+    def fetch_sync(
+        self,
+        f: Optional[Filter] = None,
+        fetch_pages: bool = True,
+    ) -> Shelf:
         """Fetch the manga"""
 
-        return asyncio.run(self.fetch(f))
+        return asyncio.run(self.fetch(f, fetch_pages))
 
-    async def fetch(self, f: Optional[Filter] = None) -> Shelf:
+    async def fetch(
+        self,
+        f: Optional[Filter] = None,
+        fetch_pages: bool = True,
+    ) -> Shelf:
         """Fetch the manga"""
 
         async with aiohttp.ClientSession() as session:
@@ -135,12 +143,13 @@ class Scraper(eventh.Handler):
             if f is not None:
                 shelf.filter(f)
 
-            pages_futures = (
-                asyncio.ensure_future(self.fetch_pages(session, chapter))
-                for chapter in shelf.manga.chapters
-            )
+            if fetch_pages:
+                pages_futures = (
+                    asyncio.ensure_future(self.fetch_pages(session, chapter))
+                    for chapter in shelf.manga.chapters
+                )
+                await asyncio.gather(*pages_futures)
 
-            await asyncio.gather(*pages_futures)
             return shelf
 
     @eventh.Handler.async_event("title")
