@@ -2,7 +2,7 @@ import asyncio
 import re
 from importlib import import_module
 from io import BytesIO
-from typing import List, Type
+from typing import List, Optional, Type
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -12,6 +12,7 @@ from haku.exceptions import NoProviderFound
 from haku.meta import Chapter, Manga, Page
 from haku.providers import providers
 from haku.raw.endpoints import Endpoints
+from haku.shelf import Filter, Shelf
 from haku.utils import abstract, eventh
 
 
@@ -111,42 +112,34 @@ class Scraper(eventh.Handler):
         self.url = url
         self.provider = provider
 
-    def fetch_sync(self) -> Manga:
+    def fetch_sync(self, f: Optional[Filter] = None) -> Shelf:
         """Fetch the manga"""
 
-        return asyncio.run(self.fetch())
+        return asyncio.run(self.fetch(f))
 
-    async def fetch(self) -> Manga:
+    async def fetch(self, f: Optional[Filter] = None) -> Shelf:
         """Fetch the manga"""
 
         async with aiohttp.ClientSession() as session:
 
-            chapters_partials = await self.fetch_chapters(session, self.url)
-            pages_futures = (
-                asyncio.ensure_future(self.fetch_pages(session, chapter))
-                for chapter in chapters_partials
-            )
-
-            chapters = [
-                Chapter(
-                    url=chapter.url,
-                    title=chapter.title,
-                    index=chapter.index,
-                    volume=chapter.volume,
-                    pages=pages,
-                )
-                for chapter, pages in zip(
-                    chapters_partials,
-                    await asyncio.gather(*pages_futures),
-                )
-            ]
-
-            return Manga(
+            manga = Manga(
                 title=await self.fetch_title(session, self.url),
                 cover=await self.fetch_cover(session, self.url),
-                chapters=chapters,
+                chapters=await self.fetch_chapters(session, self.url),
                 url=self.url,
             )
+
+            shelf = Shelf(manga)
+            if f is not None:
+                shelf.filter(f)
+
+            pages_futures = (
+                asyncio.ensure_future(self.fetch_pages(session, chapter))
+                for chapter in shelf.manga.chapters
+            )
+
+            await asyncio.gather(*pages_futures)
+            return shelf
 
     @eventh.Handler.async_event("title")
     async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
@@ -171,10 +164,11 @@ class Scraper(eventh.Handler):
     @eventh.Handler.async_event("pages")
     async def fetch_pages(
         self, session: aiohttp.ClientSession, chapter: Chapter
-    ) -> List[Page]:
+    ) -> Chapter:
         """Retrieve pages list"""
 
-        return await self.provider.fetch_pages(session, chapter)
+        chapter.pages = await self.provider.fetch_pages(session, chapter)
+        return chapter
 
 
 def route(url: str) -> Scraper:
