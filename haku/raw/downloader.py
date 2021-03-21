@@ -34,11 +34,15 @@ class Downloader:
 
     def __init__(
         self,
-        endp: Union[Endpoints, Provider],
+        endpoints: Union[Endpoints, Provider],
         manga: Union[Manga, Shelf],
         root: Optional[Union[Path, FTree]] = tmpdir(),
     ):
-        self.endpoints = endp if isinstance(endp, Endpoints) else endp.endpoints()
+        self.endpoints = (
+            endpoints
+            if isinstance(endpoints, Endpoints)
+            else endpoints.provider.endpoints()
+        )
         self.manga = manga if isinstance(manga, Manga) else manga.manga
         self.tree = root if isinstance(root, FTree) else FTree(root, self.manga)
 

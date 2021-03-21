@@ -63,8 +63,8 @@ class Helpers:
             return image
 
 
-class Provider(eventh.Handler):
-    """Provider default"""
+class Provider:
+    """Provider defaults"""
 
     name: str
     pattern: str
@@ -72,9 +72,44 @@ class Provider(eventh.Handler):
     enabled: bool = True
     endpoints: Type[Endpoints] = Endpoints
 
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self):
         self.helpers = Helpers()
+
+    @abstract
+    async def fetch_title(
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+    ) -> str:
+        """Retrieve title"""
+
+    @abstract
+    async def fetch_cover(
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+    ) -> str:
+        """Retrieve cover"""
+
+    @abstract
+    async def fetch_chapters(
+        self, session: aiohttp.ClientSession, url: str
+    ) -> List[Chapter]:
+        """Retrieve chapters list"""
+
+    @abstract
+    async def fetch_pages(
+        self, session: aiohttp.ClientSession, chapter: Chapter
+    ) -> List[Page]:
+        """Retrieve pages list"""
+
+
+class Scraper(eventh.Handler):
+    """Meta scraper"""
+
+    def __init__(self, url: str, provider: Provider):
+        self.url = url
+        self.provider = provider
 
     def fetch_sync(self) -> Manga:
         """Fetch the manga"""
@@ -94,13 +129,13 @@ class Provider(eventh.Handler):
 
             chapters = [
                 Chapter(
-                    url=c.url,
-                    title=c.title,
-                    index=c.index,
-                    volume=c.volume,
-                    pages=p,
+                    url=chapter.url,
+                    title=chapter.title,
+                    index=chapter.index,
+                    volume=chapter.volume,
+                    pages=pages,
                 )
-                for c, p in zip(
+                for chapter, pages in zip(
                     chapters_partials,
                     await asyncio.gather(*pages_futures),
                 )
@@ -117,21 +152,13 @@ class Provider(eventh.Handler):
     async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve title"""
 
-        return await self._fetch_title(session, url)
-
-    @abstract
-    async def _fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
-        """Custom provider API :: Retrieve title"""
+        return await self.provider.fetch_title(session, url)
 
     @eventh.Handler.async_event("cover")
     async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve cover"""
 
-        return await self._fetch_cover(session, url)
-
-    @abstract
-    async def _fetch_cover(self, session: aiohttp.ClientSession, url: str) -> str:
-        """Custom provider API :: Retrieve cover"""
+        return await self.provider.fetch_cover(session, url)
 
     @eventh.Handler.async_event("chapters")
     async def fetch_chapters(
@@ -139,13 +166,7 @@ class Provider(eventh.Handler):
     ) -> List[Chapter]:
         """Retrieve chapters list"""
 
-        return await self._fetch_chapters(session, url)
-
-    @abstract
-    async def _fetch_chapters(
-        self, session: aiohttp.ClientSession, url: str
-    ) -> List[Chapter]:
-        """Custom provider API :: Retrieve chapters list"""
+        return await self.provider.fetch_chapters(session, url)
 
     @eventh.Handler.async_event("pages")
     async def fetch_pages(
@@ -153,21 +174,15 @@ class Provider(eventh.Handler):
     ) -> List[Page]:
         """Retrieve pages list"""
 
-        return await self._fetch_pages(session, chapter)
-
-    @abstract
-    async def _fetch_pages(
-        self, session: aiohttp.ClientSession, chapter: Chapter
-    ) -> List[Page]:
-        """Custom provider API :: Retrieve pages list"""
+        return await self.provider.fetch_pages(session, chapter)
 
 
-def route(r: str) -> Type[Provider]:
+def route(url: str) -> Type[Provider]:
     """Try to match a provider from the enabled providers"""
 
     for provider in providers:
         candidate = import_module(f"haku.providers.{provider}").provider
-        if candidate.enabled and re.match(candidate.pattern, r):
-            return candidate(r)
+        if candidate.enabled and re.match(candidate.pattern, url):
+            return Scraper(url, candidate())
 
-    raise NoProviderFound(f'No provider match route "{r}"')
+    raise NoProviderFound(f'No provider match route "{url}"')
