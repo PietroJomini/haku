@@ -47,7 +47,7 @@ class Endpoints(eventh.Handler):
 
         else:
             self.dispatch("page.write", page)
-            write_image(image, path, page.index)
+            write_image(image, path)
 
         finally:
             self.dispatch("page.end", page)

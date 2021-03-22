@@ -23,6 +23,13 @@ class Dotman:
         with path.open("w") as dotfile:
             dotfile.write(manga.yaml())
 
+    def read(self) -> Manga:
+        """Read manga from dotfile"""
+
+        path = self.root / self.name
+        content = path.read_text()
+        return Manga.from_yaml(content)
+
 
 class FTree:
     """Folders tree builder"""
@@ -33,7 +40,10 @@ class FTree:
         manga: Manga,
         fmt="{title}",
         dotman: Union[str, Dotman] = ".haku",
+        ext: str = "png",
     ):
+        self.manga = manga
+        self.ext = ext
         self.root = root / fmt.format(title=manga.title, url=manga.url)
         self.dotman = (
             dotman
@@ -59,7 +69,7 @@ class FTree:
         for chapter in chapters:
             path = self.chapter(chapter, fmt=fmt)
             for page in chapter.pages:
-                yield page, path
+                yield page, path / f"{page.index}.{self.ext}"
 
     def __enter__(self):
         return self
@@ -75,12 +85,30 @@ class Reader:
         self.tree = tree
 
     def chapter(
-        self, chapter: Chapter, mode="RGB", ext="png"
+        self, chapter: Chapter, mode="RGB"
     ) -> Generator[Tuple[Page, Image.Image], None, None]:
         """Read images from chapter"""
 
         for page, path in self.tree.flatten(chapter):
-            image = Image.open(path / f"{page.index}.{ext}")
+            image = Image.open(path)
             if image.mode != mode:
                 image = image.convert(mode)
             yield page, image
+
+    def missing(self) -> Manga:
+        """Find missing pages in directory"""
+
+        manga = Manga(**self.tree.manga.as_dict())
+        manga.chapters = []
+
+        for chapter in self.tree.manga.chapters:
+            m_chapter = Chapter(**chapter.as_dict())
+            m_chapter.pages = []
+
+            for page, path in self.tree.flatten(chapter):
+                if not path.is_file():
+                    m_chapter.pages.append(page)
+
+            manga.chapters.append(m_chapter)
+
+        return manga

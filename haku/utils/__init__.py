@@ -38,11 +38,11 @@ def chunks(lst, n):
         yield lst[i : i + n]
 
 
-def write_image(image: Image.Image, path: Path, filename: str, fmt="png", cleanup=True):
+def write_image(image: Image.Image, path: Path, fmt="png", cleanup=True):
     """Write an image to disk"""
 
-    path.mkdir(parents=True, exist_ok=True)
-    image.save(str(path / f"{filename}.{fmt}"), format=fmt)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(str(path), format=fmt)
 
     if cleanup:
         image.close()
