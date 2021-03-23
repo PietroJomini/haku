@@ -4,7 +4,7 @@ from typing import Callable, Optional, Union
 
 import aiohttp
 
-from haku.meta import Manga
+from haku.meta import Manga, Page
 from haku.provider import Provider
 from haku.raw.endpoints import Endpoints
 from haku.raw.fs import FTree
@@ -21,6 +21,10 @@ class Method:
 
         async def method(endpoints: Endpoints, tree: FTree, manga: Manga):
             pages = list(tree.flatten(*manga.chapters))
+            if manga.cover is not None and manga.cover != "":
+                cover = Page(url=manga.cover, index="cover")
+                pages.append((cover, tree.cover()))
+
             actual_size = len(pages) if size == 0 else size
             for chunk in chunks(pages, actual_size):
                 async with aiohttp.ClientSession() as session:

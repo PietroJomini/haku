@@ -17,8 +17,11 @@ class Endpoints(eventh.Handler):
     RETRY_ON_CONNECTION_ERROR: bool = True
     ALLOWED_CONNECTION_ERRORS: Tuple[Exception] = (aiohttp.ClientError, ssl.SSLError)
 
-    async def _page(
-        self, session: aiohttp.ClientSession, page: Page, headers: Dict[str, str]
+    async def get_page(
+        self,
+        session: aiohttp.ClientSession,
+        page: Page,
+        headers: Dict[str, str],
     ) -> Image:
         """Page downloader async worker"""
 
@@ -28,14 +31,13 @@ class Endpoints(eventh.Handler):
             image = Image.open(stream)
             return image
 
+    @eventh.Handler.async_event("page")
     async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
         """Download and write a page to disk"""
 
-        self.dispatch("page", page)
-
         try:
             headers = self.get_headers(page.url)
-            image = await self._page(session, page, headers)
+            image = await self.get_page(session, page, headers)
 
         except self.ALLOWED_CONNECTION_ERRORS as err:
             self.dispatch("page.error.allowed", page, err)
@@ -49,16 +51,8 @@ class Endpoints(eventh.Handler):
             self.dispatch("page.write", page)
             write_image(image, path)
 
-        finally:
-            self.dispatch("page.end", page)
-
     async def pages(self, session: aiohttp.ClientSession, *pages: Tuple[Page, Path]):
         """Download a d write pages to disk"""
 
         tasks = (self.page(session, page, path) for page, path in pages)
         await asyncio.gather(*tasks)
-
-    def get_headers(self, url: str) -> Dict[str, str]:
-        """Get custom headers"""
-
-        return {}

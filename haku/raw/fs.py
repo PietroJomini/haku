@@ -64,12 +64,17 @@ class FTree:
     def flatten(
         self, *chapters: Chapter, fmt="{index:g} {title}"
     ) -> Generator[Tuple[Page, Path], None, None]:
-        """Flatten all pages in a list with the related paths"""
+        """Flatten all pages in a list with related paths"""
 
         for chapter in chapters:
             path = self.chapter(chapter, fmt=fmt)
             for page in chapter.pages:
                 yield page, path / f"{page.index}.{self.ext}"
+
+    def cover(self, fname: str = "cover"):
+        """Build cover path"""
+
+        return self.root / f"{fname}.{self.ext}"
 
     def __enter__(self):
         return self
