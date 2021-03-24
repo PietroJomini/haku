@@ -10,6 +10,24 @@ class Filter:
     """Filters, to be applied to a Shelf instance"""
 
     @staticmethod
+    def true():
+        """Filter all chapters"""
+
+        return Filter(
+            lambda chapter: True,
+            "True",
+        )
+
+    @staticmethod
+    def false():
+        """Filter no chapters"""
+
+        return Filter(
+            lambda chapter: False,
+            "False",
+        )
+
+    @staticmethod
     def title_in(*titles: str):
         """Filter chapters if title in *titles"""
 

@@ -1,52 +1,12 @@
 import click
 from rich import box
-from rich.console import Console
+from rich.console import Console, RenderGroup
 from rich.panel import Panel
 from rich.table import Column, Table
 
 from haku.meta import Manga
 from haku.provider import Scraper, route
-from haku.shelf import StringifiedFilter
-
-
-def rich_info(manga: Manga, show_urls: bool):
-    """Create rich table with manga info"""
-
-    out = f"Title: [b]{manga.title}[/b]"
-
-    urls = ["", f"Url: {manga.url}\n"]
-    if manga.cover is not None:
-        urls.append(f"Cover url: {manga.cover}")
-
-    if show_urls:
-        out += "\n".join(urls)
-
-    return Panel.fit(out)
-
-
-def rich_chapters(manga: Manga, show_urls: bool, show_volumes: bool):
-    """Create rich table with chapters"""
-
-    columns = [
-        Column("Volume", justify="right") if show_volumes else None,
-        Column("Index", justify="right"),
-        Column("Title"),
-        Column("Url") if show_urls else None,
-    ]
-
-    table = Table(*filter(lambda c: c is not None, columns), box=box.ROUNDED)
-
-    for chapter in manga.chapters:
-        row = [
-            f"{chapter.volume:g}" if show_volumes else None,
-            f"{chapter.index:g}",
-            chapter.title,
-            chapter.url if show_urls else None,
-        ]
-
-        table.add_row(*filter(lambda r: r is not None, row))
-
-    return table
+from haku.shelf import Filter, Shelf, StringifiedFilter
 
 
 def prepare_manga(
@@ -54,24 +14,67 @@ def prepare_manga(
     re: str,
     filters: str,
     ignore: str,
-    sort: bool,
     pages: bool,
-) -> Manga:
+) -> Shelf:
     """Prepare th emanga with a shelf"""
 
-    if re != "":
-        scraper.provider.re_chapter_title = re
+    filters = Filter.true() if filters is None else StringifiedFilter.parse(filters)
+    ignore = Filter.false() if ignore is None else StringifiedFilter.parse(ignore)
+    f = filters & ~ignore
 
-    if filters != "":
-        f = StringifiedFilter.parse(filters) & ~StringifiedFilter.parse(ignore)
-        shelf = scraper.fetch_sync(f, fetch_pages=pages)
-    else:
-        shelf = scraper.fetch_sync(fetch_pages=pages)
+    scraper.provider.re_chapter_title = re or scraper.provider.re_chapter_title
+    shelf = scraper.fetch_sync(f, fetch_pages=pages)
 
-    if sort:
-        shelf.sort()
+    return shelf
 
-    return shelf.manga
+
+def rich_fetch(
+    console: Console,
+    url: str,
+    re: str,
+    apply_filter: str,
+    ignore: str,
+) -> Manga:
+    """Fetch the provider with a rich loader"""
+
+    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
+        shelf = prepare_manga(route(url), re, apply_filter, ignore, False)
+        return shelf.sort().manga
+
+
+def rich_info(manga: Manga, show_urls: bool, show_volumes: bool):
+    """Format manga as a rich renderable"""
+
+    meta = [
+        f"Title: [b]{manga.title}[/b]",
+        f"Url: [b]{manga.url}[/b]",
+        f"Cover: [b]{manga.cover}[/b]",
+    ]
+
+    columns = [
+        Column("Volume", justify="right"),
+        Column("Index", justify="right"),
+        Column("Title"),
+        Column("Url"),
+    ]
+
+    chapters = Table(*columns, box=box.MINIMAL)
+    for chapter in manga.chapters:
+        chapters.add_row(
+            f"{chapter.volume:g}",
+            f"{chapter.index:g}",
+            chapter.title,
+            chapter.url,
+        )
+
+    if not show_urls:
+        chapters.columns = chapters.columns[:-1]
+        meta = meta[:-2]
+    if not show_volumes:
+        chapters.columns = chapters.columns[1:]
+
+    meta = Panel.fit("\n".join(meta), box=box.SIMPLE)
+    return Panel(RenderGroup(meta, chapters))
 
 
 @click.command()
@@ -85,52 +88,43 @@ def prepare_manga(
     show_default=True,
 )
 @click.option(
-    "-u",
-    "--show-urls",
-    is_flag=True,
-    help="Display url in rich mode",
-)
-@click.option(
-    "-c",
-    "--chapters",
-    is_flag=True,
-    help="Display chapters",
-)
-@click.option(
     "-v",
     "--show-volumes",
     is_flag=True,
-    help="Display chapters volume in rich mode",
+    help="Display volume [applied only in RICH format]",
+)
+@click.option(
+    "-u",
+    "--show-urls",
+    is_flag=True,
+    help="Display urls [applied only in RICH format]",
 )
 @click.option(
     "-p",
     "--pages",
     is_flag=True,
-    help="Display pages in non-rich modes",
+    help="Display pages [applied only in YAML format]",
 )
 @click.option(
     "-f",
-    "--apply-filter",
-    default="",
-    help="Apply stringified filter",
+    "--filter",
+    "apply_filter",
+    help="Apply filter",
 )
 @click.option(
     "-i",
     "--ignore",
-    default="",
-    help="Ignore from stringified filter",
+    help="Ignore filtered instances",
 )
 @click.option(
     "-r",
     "--re",
-    default="",
     help='Regex used to parse the title. Must include the named groups: "index", '
     + 'and can include the named groups: ["volume", "title"]',
 )
 def info(
     url: str,
     out: str,
-    chapters: bool,
     pages: bool,
     show_urls: bool,
     show_volumes: bool,
@@ -142,18 +136,10 @@ def info(
 
     if out == "YAML":
         scraper = route(url)
-        manga = prepare_manga(scraper, re, apply_filter, ignore, False, pages)
-        print(manga.yaml(chapters, pages))
+        shelf = prepare_manga(scraper, re, apply_filter, ignore, pages)
+        print(shelf.manga.yaml(add_chapters=True, add_pages=pages))
         return
 
     console = Console()
-
-    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
-        scraper = route(url)
-        manga = prepare_manga(scraper, re, apply_filter, ignore, True, False)
-
-    console.print(
-        rich_chapters(manga, show_urls, show_volumes)
-        if chapters
-        else rich_info(manga, show_urls)
-    )
+    manga = rich_fetch(console, url, re, apply_filter, ignore)
+    console.print(rich_info(manga, show_urls, show_volumes))
