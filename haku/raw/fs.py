@@ -1,5 +1,6 @@
+import re
 from pathlib import Path
-from typing import Generator, Tuple, Union
+from typing import Generator, List, Tuple, Union
 
 from PIL import Image
 
@@ -41,25 +42,34 @@ class FTree:
         fmt="{title}",
         dotman: Union[str, Dotman] = ".haku",
         ext: str = "png",
+        banned_chars: List[str] = ["/"],
+        banend_chars_replacement: str = "",
     ):
-        self.manga = manga
         self.ext = ext
-        self.root = root / fmt.format(title=manga.title, url=manga.url)
-        self.dotman = (
-            dotman
-            if isinstance(dotman, Dotman)
-            else Dotman(
-                self.root,
-                name=dotman,
-            )
-        )
+        self.manga = manga
+        self.banned_chars = rf'[{"".join(banned_chars)}]'
+        self.banend_chars_replacement = banend_chars_replacement
+        self.root = self.clean_path(root / fmt.format(title=manga.title, url=manga.url))
+        self.dotman = dotman
+        if not isinstance(self.dotman, Dotman):
+            self.dotman = Dotman(self.root, name=dotman)
+
+    def clean_path(self, path: Union[Path, str]) -> Path:
+        """Clean a path from banned chars"""
+
+        path = re.sub(self.banned_chars, self.banend_chars_replacement, str(path))
+        return Path(path)
 
     def chapter(self, chapter: Chapter, fmt="{index:g} {title}") -> Path:
         """Build chapter path"""
 
-        return self.root / fmt.format(
-            index=chapter.index, title=chapter.title, volume=chapter.volume
+        path = fmt.format(
+            index=chapter.index,
+            title=chapter.title,
+            volume=chapter.volume,
         )
+
+        return self.root / self.clean_path(path)
 
     def flatten(
         self, *chapters: Chapter, fmt="{index:g} {title}"
@@ -69,12 +79,12 @@ class FTree:
         for chapter in chapters:
             path = self.chapter(chapter, fmt=fmt)
             for page in chapter.pages:
-                yield page, path / f"{page.index}.{self.ext}"
+                yield page, path / self.clean_path(f"{page.index}.{self.ext}")
 
     def cover(self, fname: str = "cover"):
         """Build cover path"""
 
-        return self.root / f"{fname}.{self.ext}"
+        return self.root / self.clean_path(f"{fname}.{self.ext}")
 
     def __enter__(self):
         return self
