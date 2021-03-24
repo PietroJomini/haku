@@ -1,7 +1,9 @@
+import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import IO, Any, Callable, Union
+from typing import IO, Any, Callable, Optional, Union
 
 from PIL import Image
 
@@ -64,3 +66,15 @@ def cleanup_folder(folder: Path):
     """Cleanup a folder"""
 
     shutil.rmtree(folder)
+
+
+def safe_path(
+    path: Union[Path, str],
+    unsafe_chars: Optional[str] = None,
+    replacement: str = "",
+) -> Path:
+    """Clean a path from banned chars"""
+
+    unsafe_chars = unsafe_chars or os.sep
+    path = re.sub(unsafe_chars, replacement, str(path))
+    return Path(path)

@@ -1,11 +1,10 @@
-import re
 from pathlib import Path
-from typing import Generator, List, Tuple, Union
+from typing import Generator, Optional, Tuple
 
 from PIL import Image
 
 from haku.meta import Chapter, Manga, Page
-from haku.utils import cleanup_folder
+from haku.utils import cleanup_folder, safe_path
 
 
 class Dotman:
@@ -33,58 +32,59 @@ class Dotman:
 
 
 class FTree:
-    """Folders tree builder"""
+    """Raw folder tree generator"""
+
+    fmt_chapter: str = "{index:g} {title}"
+    fmt_page: str = "{index}.{ext}"
+    fmt_cover: str = "cover.{ext}"
 
     def __init__(
         self,
         root: Path,
         manga: Manga,
         fmt="{title}",
-        dotman: Union[str, Dotman] = ".haku",
         ext: str = "png",
-        banned_chars: List[str] = ["/"],
-        banend_chars_replacement: str = "",
+        dotman: Optional[Dotman] = None,
     ):
         self.ext = ext
         self.manga = manga
-        self.banned_chars = rf'[{"".join(banned_chars)}]'
-        self.banend_chars_replacement = banend_chars_replacement
-        self.root = self.clean_path(root / fmt.format(title=manga.title, url=manga.url))
-        self.dotman = dotman
-        if not isinstance(self.dotman, Dotman):
-            self.dotman = Dotman(self.root, name=dotman)
+        self.root = root / safe_path(fmt.format(title=manga.title))
+        self.dotman = dotman or Dotman(self.root)
 
-    def clean_path(self, path: Union[Path, str]) -> Path:
-        """Clean a path from banned chars"""
+    def chapter(self, chapter: Chapter, fmt: Optional[str] = None) -> Path:
+        """Get chapter path"""
 
-        path = re.sub(self.banned_chars, self.banend_chars_replacement, str(path))
-        return Path(path)
-
-    def chapter(self, chapter: Chapter, fmt="{index:g} {title}") -> Path:
-        """Build chapter path"""
-
+        fmt = fmt or self.fmt_chapter
         path = fmt.format(
             index=chapter.index,
             title=chapter.title,
             volume=chapter.volume,
         )
 
-        return self.root / self.clean_path(path)
+        return self.root / safe_path(path)
 
     def flatten(
-        self, *chapters: Chapter, fmt="{index:g} {title}"
+        self,
+        *chapters: Chapter,
+        fmt: Optional[str] = None,
+        fmt_page: Optional[str] = None,
     ) -> Generator[Tuple[Page, Path], None, None]:
-        """Flatten all pages in a list with related paths"""
+        """Flatten pages and paths in a list"""
+
+        fmt = fmt or self.fmt_chapter
+        fmt_page = fmt_page or self.fmt_page
 
         for chapter in chapters:
-            path = self.chapter(chapter, fmt=fmt)
+            path = self.chapter(chapter, fmt)
             for page in chapter.pages:
-                yield page, path / self.clean_path(f"{page.index}.{self.ext}")
+                page_path = fmt_page.format(index=page.index, ext=self.ext)
+                yield page, path / safe_path(page_path)
 
-    def cover(self, fname: str = "cover"):
-        """Build cover path"""
+    def cover(self, fmt: Optional[str] = None):
+        """Get cover path"""
 
-        return self.root / self.clean_path(f"{fname}.{self.ext}")
+        fmt = fmt or self.fmt_cover
+        return self.root / safe_path(fmt.format(ext=self.ext))
 
     def __enter__(self):
         return self
@@ -94,7 +94,7 @@ class FTree:
 
 
 class Reader:
-    """Folder tree reader"""
+    """Raw folder tree reader"""
 
     def __init__(self, tree: FTree):
         self.tree = tree
@@ -105,7 +105,7 @@ class Reader:
         """Read images from chapter"""
 
         for page, path in self.tree.flatten(chapter):
-            image = Image.open(path)
+            image = Image.open(safe_path(path))
             if image.mode != mode:
                 image = image.convert(mode)
             yield page, image
