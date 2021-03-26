@@ -50,13 +50,22 @@ class Handler:
         return f"{key}{cls.K_SEP}{cls.K_END}"
 
     @classmethod
-    def event(cls, key: str, endkey: Optional[str] = None):
+    def event(cls, key: str, endkey: Optional[str] = None, wrap_async: bool = False):
         """Class decorator to create an event from a method"""
 
         endkey = endkey or cls.endkey(key)
 
         def decorator(cbk):
             """Internal decorator"""
+
+            async def async_wrapper(self: Handler, *args, **kwargs):
+                """Actual async wrapper"""
+
+                self.dispatch(key, *args, **kwargs)
+                res = await cbk(self, *args, **kwargs)
+                self.dispatch(endkey, *args, **kwargs)
+
+                return res
 
             def wrapper(self: Handler, *args, **kwargs):
                 """Actual wrapper"""
@@ -67,29 +76,7 @@ class Handler:
 
                 return res
 
-            return wrapper
-
-        return decorator
-
-    @classmethod
-    def async_event(cls, key: str, endkey: Optional[str] = None):
-        """Class decorator to create an event from a method"""
-
-        endkey = endkey or cls.endkey(key)
-
-        def decorator(cbk):
-            """Internal decorator"""
-
-            async def wrapper(self: Handler, *args, **kwargs):
-                """Actual wrapper"""
-
-                self.dispatch(key, *args, **kwargs)
-                res = await cbk(self, *args, **kwargs)
-                self.dispatch(endkey, *args, **kwargs)
-
-                return res
-
-            return wrapper
+            return async_wrapper if wrap_async else wrapper
 
         return decorator
 

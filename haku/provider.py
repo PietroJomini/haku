@@ -152,19 +152,19 @@ class Scraper(eventh.Handler):
 
             return shelf
 
-    @eventh.Handler.async_event("title")
+    @eventh.Handler.event("title", wrap_async=True)
     async def fetch_title(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve title"""
 
         return await self.provider.fetch_title(session, url)
 
-    @eventh.Handler.async_event("cover")
+    @eventh.Handler.event("cover", wrap_async=True)
     async def fetch_cover(self, session: aiohttp.ClientSession, url: str) -> str:
         """Retrieve cover"""
 
         return await self.provider.fetch_cover(session, url)
 
-    @eventh.Handler.async_event("chapters")
+    @eventh.Handler.event("chapters", wrap_async=True)
     async def fetch_chapters(
         self, session: aiohttp.ClientSession, url: str
     ) -> List[Chapter]:
@@ -172,7 +172,7 @@ class Scraper(eventh.Handler):
 
         return await self.provider.fetch_chapters(session, url)
 
-    @eventh.Handler.async_event("pages")
+    @eventh.Handler.event("pages", wrap_async=True)
     async def fetch_pages(
         self, session: aiohttp.ClientSession, chapter: Chapter
     ) -> Chapter:

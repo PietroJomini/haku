@@ -31,7 +31,7 @@ class Endpoints(eventh.Handler):
             image = Image.open(stream)
             return image
 
-    @eventh.Handler.async_event("page")
+    @eventh.Handler.event("page", wrap_async=True)
     async def page(self, session: aiohttp.ClientSession, page: Page, path: Path):
         """Download and write a page to disk"""
 
