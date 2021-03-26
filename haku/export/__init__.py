@@ -1,5 +1,5 @@
 import asyncio
-from multiprocessing import Pool
+from multiprocessing import Manager, Pool
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
@@ -28,8 +28,15 @@ class Converter(eventh.Handler):
         """Convert a manga"""
 
         self._prepare()
+
+        manager = Manager()
+        self.shared_list = manager.list()
+        self.shared_dict = manager.dict()
+
         with Pool(processes=processes) as pool:
             pool.map(self.conver_chapter, self.manga.chapters)
+
+        self._followup()
 
     def conver_chapter(self, chapter: Chapter) -> bool:
         """Convert a chapter"""
