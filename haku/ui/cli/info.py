@@ -5,44 +5,11 @@ from rich.panel import Panel
 from rich.table import Column, Table
 
 from haku.meta import Manga
-from haku.provider import Scraper, route
-from haku.shelf import Filter, Shelf, StringifiedFilter
+from haku.provider import route
+from haku.ui.cli.common import prepare_manga, rich_fetch
 
 
-def prepare_manga(
-    scraper: Scraper,
-    re: str,
-    filters: str,
-    ignore: str,
-    pages: bool,
-) -> Shelf:
-    """Prepare th emanga with a shelf"""
-
-    filters = Filter.true() if filters is None else StringifiedFilter.parse(filters)
-    ignore = Filter.false() if ignore is None else StringifiedFilter.parse(ignore)
-    f = filters & ~ignore
-
-    scraper.provider.re_chapter_title = re or scraper.provider.re_chapter_title
-    shelf = scraper.fetch_sync(f, fetch_pages=pages)
-
-    return shelf
-
-
-def rich_fetch(
-    console: Console,
-    url: str,
-    re: str,
-    apply_filter: str,
-    ignore: str,
-) -> Manga:
-    """Fetch the provider with a rich loader"""
-
-    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
-        shelf = prepare_manga(route(url), re, apply_filter, ignore, False)
-        return shelf.sort().manga
-
-
-def rich_info(manga: Manga, show_urls: bool, show_volumes: bool):
+def rich_info(manga: Manga, show_chapters: bool, show_urls: bool, show_volumes: bool):
     """Format manga as a rich renderable"""
 
     meta = [
@@ -58,6 +25,13 @@ def rich_info(manga: Manga, show_urls: bool, show_volumes: bool):
         Column("Url"),
     ]
 
+    if not show_urls:
+        meta = meta[:-2]
+
+    meta = Panel.fit("\n".join(meta), box=box.SIMPLE)
+    if not show_chapters:
+        return meta
+
     chapters = Table(*columns, box=box.MINIMAL)
     for chapter in manga.chapters:
         chapters.add_row(
@@ -69,12 +43,10 @@ def rich_info(manga: Manga, show_urls: bool, show_volumes: bool):
 
     if not show_urls:
         chapters.columns = chapters.columns[:-1]
-        meta = meta[:-2]
     if not show_volumes:
         chapters.columns = chapters.columns[1:]
 
-    meta = Panel.fit("\n".join(meta), box=box.SIMPLE)
-    return Panel(RenderGroup(meta, chapters))
+    return RenderGroup(meta, chapters)
 
 
 @click.command()
@@ -86,6 +58,12 @@ def rich_info(manga: Manga, show_urls: bool, show_volumes: bool):
     type=click.Choice(["RICH", "YAML"], case_sensitive=False),
     help="Output format",
     show_default=True,
+)
+@click.option(
+    "-c",
+    "--show-chapters",
+    is_flag=True,
+    help="Display chapters [applied only in RICH format]",
 )
 @click.option(
     "-v",
@@ -126,6 +104,7 @@ def info(
     url: str,
     out: str,
     pages: bool,
+    show_chapters: bool,
     show_urls: bool,
     show_volumes: bool,
     apply_filter: str,
@@ -142,4 +121,4 @@ def info(
 
     console = Console()
     manga = rich_fetch(console, url, re, apply_filter, ignore)
-    console.print(rich_info(manga, show_urls, show_volumes))
+    console.print(Panel(rich_info(manga, show_chapters, show_urls, show_volumes)))
