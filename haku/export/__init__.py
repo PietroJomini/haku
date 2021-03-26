@@ -31,15 +31,10 @@ class Converter(eventh.Handler):
         with Pool(processes=processes) as pool:
             pool.map(self.conver_chapter, self.manga.chapters)
 
-    def convert_slow(self):
-
-        self._prepare()
-        for chapter in self.manga.chapters:
-            self.conver_chapter(chapter)
-
     def conver_chapter(self, chapter: Chapter) -> bool:
         """Convert a chapter"""
 
+        self.dispatch("chapter", chapter)
         images = asyncio.run(self.reader.chapter(chapter))
         images.sort(key=lambda image: image[0].index)
 
@@ -47,6 +42,8 @@ class Converter(eventh.Handler):
         if should_cleanup:
             for page, image in images:
                 image.close()
+
+        self.dispatch(self.endkey("chapter"), chapter)
 
     @abstract
     def _convert_chapter(self, chapter: Chapter, pages: List[Tuple[Page, Image.Image]]):

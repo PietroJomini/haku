@@ -44,10 +44,16 @@ class Handler:
         return self.on(key, lambda *_: cbk(key))
 
     @classmethod
+    def endkey(cls, key: str) -> str:
+        """Compute end key"""
+
+        return f"{key}{cls.K_SEP}{cls.K_END}"
+
+    @classmethod
     def event(cls, key: str, endkey: Optional[str] = None):
         """Class decorator to create an event from a method"""
 
-        endkey = endkey if endkey is not None else f"{key}{cls.K_SEP}{cls.K_END}"
+        endkey = endkey or cls.endkey(key)
 
         def decorator(cbk):
             """Internal decorator"""
@@ -69,7 +75,7 @@ class Handler:
     def async_event(cls, key: str, endkey: Optional[str] = None):
         """Class decorator to create an event from a method"""
 
-        endkey = endkey if endkey is not None else f"{key}{cls.K_SEP}{cls.K_END}"
+        endkey = endkey or cls.endkey(key)
 
         def decorator(cbk):
             """Internal decorator"""
