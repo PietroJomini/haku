@@ -1,6 +1,7 @@
 import asyncio
+from multiprocessing import Pool
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from PIL import Image
 
@@ -23,21 +24,29 @@ class Converter(eventh.Handler):
         self.out = out if isinstance(out, FTree) else FTree(out, self.manga)
         self.reader = reader if isinstance(reader, Reader) else Reader(reader)
 
-    def convert(self):
+    def convert(self, processes: Optional[int] = None):
         """Convert a manga"""
 
         self._prepare()
+        with Pool(processes=processes) as pool:
+            pool.map(self.conver_chapter, self.manga.chapters)
 
+    def convert_slow(self):
+
+        self._prepare()
         for chapter in self.manga.chapters:
-            self.dispatch("chapter", chapter)
+            self.conver_chapter(chapter)
 
-            images = asyncio.run(self.reader.chapter(chapter))
-            images.sort(key=lambda image: image[0].index)
+    def conver_chapter(self, chapter: Chapter) -> bool:
+        """Convert a chapter"""
 
-            should_cleanup = self._convert_chapter(chapter, images)
-            if should_cleanup:
-                for page, image in images:
-                    image.close()
+        images = asyncio.run(self.reader.chapter(chapter))
+        images.sort(key=lambda image: image[0].index)
+
+        should_cleanup = self._convert_chapter(chapter, images)
+        if should_cleanup:
+            for page, image in images:
+                image.close()
 
     @abstract
     def _convert_chapter(self, chapter: Chapter, pages: List[Tuple[Page, Image.Image]]):
