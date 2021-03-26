@@ -1,5 +1,6 @@
+import asyncio
 from pathlib import Path
-from typing import Generator, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 from PIL import Image
 
@@ -99,16 +100,27 @@ class Reader:
     def __init__(self, tree: FTree):
         self.tree = tree
 
-    def chapter(
-        self, chapter: Chapter, mode="RGB"
-    ) -> Generator[Tuple[Page, Image.Image], None, None]:
+    async def chapter(
+        self, chapter: Chapter, mode: str = "RGB"
+    ) -> List[Tuple[Page, Image.Image]]:
         """Read images from chapter"""
 
-        for page, path in self.tree.flatten(chapter):
-            image = Image.open(safe_path(path))
-            if image.mode != mode:
-                image = image.convert(mode)
-            yield page, image
+        tasks = (
+            asyncio.ensure_future(self.page(page, path))
+            for page, path in self.tree.flatten(chapter)
+        )
+
+        return await asyncio.gather(*tasks)
+
+    async def page(
+        self, page: Page, path: Path, mode: str = "RGB"
+    ) -> List[Tuple[Page, Image.Image]]:
+        """Read page from disk"""
+
+        image = Image.open(path)
+        if image.mode != mode:
+            image = image.convert(mode)
+        return page, image
 
     def missing(self) -> Manga:
         """Find missing pages in directory"""

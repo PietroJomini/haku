@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import List, Tuple, Union
 
@@ -30,7 +31,7 @@ class Converter(eventh.Handler):
         for chapter in self.manga.chapters:
             self.dispatch("chapter", chapter)
 
-            images = list(self.reader.chapter(chapter))
+            images = asyncio.run(self.reader.chapter(chapter))
             images.sort(key=lambda image: image[0].index)
 
             should_cleanup = self._convert_chapter(chapter, images)
