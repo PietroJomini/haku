@@ -120,5 +120,5 @@ def info(
         return
 
     console = Console()
-    manga = rich_fetch(console, url, re, apply_filter, ignore)
-    console.print(Panel(rich_info(manga, show_chapters, show_urls, show_volumes)))
+    shelf, _ = rich_fetch(console, url, re, apply_filter, ignore)
+    console.print(Panel(rich_info(shelf.manga, show_chapters, show_urls, show_volumes)))

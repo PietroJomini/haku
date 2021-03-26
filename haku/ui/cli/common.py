@@ -1,3 +1,5 @@
+from typing import Union
+
 from rich.console import Console
 
 from haku.meta import Manga
@@ -30,9 +32,11 @@ def rich_fetch(
     re: str,
     apply_filter: str,
     ignore: str,
-) -> Manga:
+    pages: bool = False
+) -> Union[Manga, Scraper]:
     """Fetch the provider with a rich loader"""
 
     with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
-        shelf = prepare_manga(route(url), re, apply_filter, ignore, False)
-        return shelf.sort().manga
+        scraper = route(url)
+        shelf = prepare_manga(scraper, re, apply_filter, ignore, pages)
+        return shelf.sort(), scraper

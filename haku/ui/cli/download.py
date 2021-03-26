@@ -1,6 +1,41 @@
 from pathlib import Path
 
 import click
+from rich.console import Console
+from rich.progress import BarColumn, Progress, TimeElapsedColumn, TimeRemainingColumn
+
+from haku.provider import Scraper
+from haku.raw.downloader import Downloader, Method
+from haku.shelf import Shelf
+from haku.ui.cli.common import rich_fetch
+
+
+def rich_download(
+    shelf: Shelf,
+    scraper: Scraper,
+    path: Path,
+    batch_size: int,
+    rate_limit: int,
+):
+    """Download manga with a rich trackbar"""
+
+    downloader = Downloader(scraper, shelf, path)
+    n_pages = sum((len(chapter.pages) for chapter in shelf.manga.chapters)) + 1
+
+    with Progress(
+        "[progress.description]{task.description}",
+        BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        "[",
+        TimeElapsedColumn(),
+        "/",
+        TimeRemainingColumn(),
+        "]",
+    ) as track:
+        dl_task = track.add_task("Downloading...", total=n_pages)
+        downloader.endpoints.on("page.end", lambda *_: track.update(dl_task, advance=1))
+
+        downloader.download(Method.batch(batch_size), rate_limit=rate_limit)
 
 
 @click.command()
@@ -60,8 +95,11 @@ def download(
     out: str,
     batch_size: int,
     rate_limit: int,
-    filters: str,
+    apply_filter: str,
     ignore: str,
     re: str,
 ):
     """TODO(me) better description"""
+
+    shelf, scraper = rich_fetch(Console(), url, re, apply_filter, ignore, True)
+    rich_download(shelf, scraper, path, batch_size, rate_limit)
