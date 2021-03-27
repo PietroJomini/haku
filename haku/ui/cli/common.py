@@ -1,10 +1,9 @@
 from typing import Union
 
-from rich.console import Console
-
 from haku.meta import Manga
 from haku.provider import Scraper, route
 from haku.shelf import Filter, Shelf, StringifiedFilter
+from haku.utils.cli import Console, Loader
 
 
 def prepare_manga(
@@ -32,11 +31,11 @@ def rich_fetch(
     re: str,
     apply_filter: str,
     ignore: str,
-    pages: bool = False
+    pages: bool = False,
 ) -> Union[Manga, Scraper]:
     """Fetch the provider with a rich loader"""
 
-    with console.status("Fetching info", spinner="bouncingBar", spinner_style=""):
+    with Loader(console, "Fetching info"):
         scraper = route(url)
         shelf = prepare_manga(scraper, re, apply_filter, ignore, pages)
         return shelf.sort(), scraper

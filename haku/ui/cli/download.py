@@ -2,7 +2,6 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import click
-from rich.console import Console as RichConsole
 
 from haku.export.pdf import Pdf
 from haku.provider import Scraper
@@ -129,10 +128,15 @@ def download(
 
     console = Console(columns=100)
 
-    shelf, scraper = rich_fetch(RichConsole(), url, re, apply_filter, ignore, True)
-
-    destination = tmpdir() if out != "RAW" else path
-    tree = dl_progress(console, shelf, scraper, destination, batch_size, rate_limit)
+    shelf, scraper = rich_fetch(console, url, re, apply_filter, ignore, True)
+    tree = dl_progress(
+        console,
+        shelf,
+        scraper,
+        tmpdir() if out != "RAW" else path,
+        batch_size,
+        rate_limit,
+    )
 
     if out == "PDF":
         to_pdf(console, tree, shelf, path)

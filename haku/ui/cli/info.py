@@ -1,12 +1,14 @@
 import click
 from rich import box
-from rich.console import Console, RenderGroup
+from rich.console import Console as RichConsole
+from rich.console import RenderGroup
 from rich.panel import Panel
 from rich.table import Column, Table
 
 from haku.meta import Manga
 from haku.provider import route
 from haku.ui.cli.common import prepare_manga, rich_fetch
+from haku.utils.cli import Console
 
 
 def rich_info(manga: Manga, show_chapters: bool, show_urls: bool, show_volumes: bool):
@@ -119,6 +121,8 @@ def info(
         print(shelf.manga.yaml(add_chapters=True, add_pages=pages))
         return
 
-    console = Console()
+    console = Console(columns=100)
     shelf, _ = rich_fetch(console, url, re, apply_filter, ignore)
-    console.print(Panel(rich_info(shelf.manga, show_chapters, show_urls, show_volumes)))
+
+    info_panel = Panel(rich_info(shelf.manga, show_chapters, show_urls, show_volumes))
+    RichConsole().print(info_panel)
