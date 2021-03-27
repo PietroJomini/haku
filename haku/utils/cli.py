@@ -1,6 +1,8 @@
 from numbers import Number
 from shutil import get_terminal_size
 from sys import stdout
+from threading import Thread
+from time import sleep
 from typing import Any, Optional, TextIO, Tuple, Union
 
 from haku.utils import abstract
@@ -159,4 +161,90 @@ class Progress(Renderable):
         return self
 
     def __exit__(self, *_):
+        self.console.cursor.show()
+
+
+class Loader(Renderable):
+    """Loader bar"""
+
+    end = "\r"
+
+    def __init__(
+        self,
+        console: Console,
+        description: Optional[str] = None,
+        bounds: Tuple[str, str] = ("[", "]"),
+        slider: str = ">>>>>",
+        void: str = "-",
+        full: str = "=",
+        fmt: str = "{description}{bar}",
+        delay: float = 0.05,
+    ):
+        self.console = console
+        self.description = f"{description} " if description is not None else ""
+
+        self.running = False
+        self.worker = None
+        self.delay = delay
+
+        self.bounds = bounds
+        self.slider = slider
+        self.void = void
+        self.full = full
+        self.fmt = fmt
+
+        self.inner_bar = self.slider + self.void * (self.width - 2 - len(self.slider))
+
+    @property
+    def width(self):
+        """Get bar width"""
+
+        partial = self.fmt.format(description=self.description, bar="")
+        return self.console.columns - len(partial)
+
+    @property
+    def bar(self):
+        """Get rendered bar"""
+
+        return self.bounds[0] + self.inner_bar + self.bounds[1]
+
+    def update(self):
+        """Update the slider position"""
+
+        self.inner_bar = self.inner_bar[-1] + self.inner_bar[:-1]
+
+    def update_worker(self):
+        """Update the slider repeatedly"""
+
+        while self.running:
+            self.update()
+            self.console.print(self)
+            sleep(self.delay)
+
+    def fill(self):
+        """Fill the bar"""
+
+        self.inner_bar = self.full * (self.width - 2)
+
+    def render(self):
+        """Render as a string"""
+
+        return self.fmt.format(
+            description=self.description,
+            bar=self.bar,
+        )
+
+    def __enter__(self):
+        self.console.cursor.hide()
+        self.running = True
+        self.worker = Thread(target=self.update_worker)
+        self.worker.start()
+        return self
+
+    def __exit__(self, *_):
+        self.running = False
+        self.worker.join()
+
+        self.fill()
+        self.console.print(self)
         self.console.cursor.show()
