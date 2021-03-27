@@ -1,8 +1,7 @@
 from pathlib import Path
 
 import click
-from rich.console import Console
-from rich.progress import BarColumn, Progress, TimeElapsedColumn, TimeRemainingColumn
+from rich.console import Console as RichConsole
 
 from haku.export.pdf import Pdf
 from haku.provider import Scraper
@@ -11,9 +10,11 @@ from haku.raw.fs import FTree
 from haku.shelf import Shelf
 from haku.ui.cli.common import rich_fetch
 from haku.utils import tmpdir
+from haku.utils.cli import Console, Progress
 
 
 def rich_download(
+    console: Console,
     shelf: Shelf,
     scraper: Scraper,
     path: Path,
@@ -23,21 +24,13 @@ def rich_download(
     """Download manga with a rich trackbar"""
 
     with Progress(
-        "[progress.description]{task.description}",
-        BarColumn(),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        "[",
-        TimeElapsedColumn(),
-        "/",
-        TimeRemainingColumn(),
-        "]",
-    ) as track:
+        console,
+        sum((len(chapter.pages) for chapter in shelf.manga.chapters)) + 1,
+        description="Downloading...",
+    ) as bar:
 
         downloader = Downloader(scraper, shelf, path)
-        n_pages = sum((len(chapter.pages) for chapter in shelf.manga.chapters)) + 1
-
-        dl_task = track.add_task("Downloading...", total=n_pages)
-        downloader.endpoints.on("page.end", lambda *_: track.update(dl_task, advance=1))
+        downloader.endpoints.on("page.end", lambda *_: bar.advance(1))
 
         return downloader.download(Method.batch(batch_size), rate_limit=rate_limit)
 
@@ -117,10 +110,17 @@ def download(
 ):
     """TODO(me) better description"""
 
-    shelf, scraper = rich_fetch(Console(), url, re, apply_filter, ignore, True)
+    shelf, scraper = rich_fetch(RichConsole(), url, re, apply_filter, ignore, True)
 
     destination = tmpdir() if out != "RAW" else path
-    tree = rich_download(shelf, scraper, destination, batch_size, rate_limit)
+    tree = rich_download(
+        Console(columns=100),
+        shelf,
+        scraper,
+        destination,
+        batch_size,
+        rate_limit,
+    )
 
     if out == "PDF":
         to_pdf(tree, shelf, path)
