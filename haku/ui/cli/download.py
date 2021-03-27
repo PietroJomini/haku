@@ -4,10 +4,13 @@ import click
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TimeElapsedColumn, TimeRemainingColumn
 
+from haku.export.pdf import Pdf
 from haku.provider import Scraper
 from haku.raw.downloader import Downloader, Method
+from haku.raw.fs import FTree
 from haku.shelf import Shelf
 from haku.ui.cli.common import rich_fetch
+from haku.utils import tmpdir
 
 
 def rich_download(
@@ -19,9 +22,6 @@ def rich_download(
 ):
     """Download manga with a rich trackbar"""
 
-    downloader = Downloader(scraper, shelf, path)
-    n_pages = sum((len(chapter.pages) for chapter in shelf.manga.chapters)) + 1
-
     with Progress(
         "[progress.description]{task.description}",
         BarColumn(),
@@ -32,10 +32,26 @@ def rich_download(
         TimeRemainingColumn(),
         "]",
     ) as track:
+
+        downloader = Downloader(scraper, shelf, path)
+        n_pages = sum((len(chapter.pages) for chapter in shelf.manga.chapters)) + 1
+
         dl_task = track.add_task("Downloading...", total=n_pages)
         downloader.endpoints.on("page.end", lambda *_: track.update(dl_task, advance=1))
 
-        downloader.download(Method.batch(batch_size), rate_limit=rate_limit)
+        return downloader.download(Method.batch(batch_size), rate_limit=rate_limit)
+
+
+def to_pdf(
+    src: FTree,
+    shelf: Shelf,
+    destination: str,
+):
+    """Convert to pdf"""
+
+    out_tree = FTree(destination, shelf.manga)
+    pdf = Pdf(shelf, src, out_tree)
+    pdf.convert()
 
 
 @click.command()
@@ -102,4 +118,9 @@ def download(
     """TODO(me) better description"""
 
     shelf, scraper = rich_fetch(Console(), url, re, apply_filter, ignore, True)
-    rich_download(shelf, scraper, path, batch_size, rate_limit)
+
+    destination = tmpdir() if out != "RAW" else path
+    tree = rich_download(shelf, scraper, destination, batch_size, rate_limit)
+
+    if out == "PDF":
+        to_pdf(tree, shelf, path)
