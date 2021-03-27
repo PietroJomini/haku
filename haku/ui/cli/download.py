@@ -1,3 +1,4 @@
+from multiprocessing import Manager
 from pathlib import Path
 
 import click
@@ -13,7 +14,7 @@ from haku.utils import tmpdir
 from haku.utils.cli import Console, Progress
 
 
-def rich_download(
+def dl_progress(
     console: Console,
     shelf: Shelf,
     scraper: Scraper,
@@ -36,15 +37,31 @@ def rich_download(
 
 
 def to_pdf(
+    console: Console,
     src: FTree,
     shelf: Shelf,
     destination: str,
 ):
     """Convert to pdf"""
 
-    out_tree = FTree(destination, shelf.manga)
-    pdf = Pdf(shelf, src, out_tree)
-    pdf.convert()
+    with Progress(
+        console,
+        len(shelf.manga.chapters),
+        "Converting...",
+    ) as bar:
+
+        manager = Manager()
+        shared_dict = manager.dict()
+        shared_dict["tot"] = 0
+
+        def update(c):
+            shared_dict["tot"] += 1
+            bar.to(shared_dict["tot"])
+
+        out_tree = FTree(destination, shelf.manga)
+        pdf = Pdf(shelf, src, out_tree)
+        pdf.on("chapter.end", update)
+        pdf.convert()
 
 
 @click.command()
@@ -110,17 +127,12 @@ def download(
 ):
     """TODO(me) better description"""
 
+    console = Console(columns=100)
+
     shelf, scraper = rich_fetch(RichConsole(), url, re, apply_filter, ignore, True)
 
     destination = tmpdir() if out != "RAW" else path
-    tree = rich_download(
-        Console(columns=100),
-        shelf,
-        scraper,
-        destination,
-        batch_size,
-        rate_limit,
-    )
+    tree = dl_progress(console, shelf, scraper, destination, batch_size, rate_limit)
 
     if out == "PDF":
-        to_pdf(tree, shelf, path)
+        to_pdf(console, tree, shelf, path)

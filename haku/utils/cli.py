@@ -1,7 +1,7 @@
 from numbers import Number
 from shutil import get_terminal_size
 from sys import stdout
-from typing import Optional, TextIO, Tuple
+from typing import Any, Optional, TextIO, Tuple, Union
 
 from haku.utils import abstract
 
@@ -54,10 +54,20 @@ class Console:
 
         self.cursor = Cursor()
 
-    def print(self, item: Renderable):
+    @property
+    def void_line(self):
+        """Clear a line"""
+
+        return " " * self.columns
+
+    def print(self, item: Union[Any, Renderable], end: Optional[str] = None):
         """Render a renderable"""
 
-        print(item.render(), file=self.stdout, end=item.end)
+        if isinstance(item, Renderable):
+            print(item.render(), end=end or item.end)
+        else:
+            print(self.void_line, end="\r")
+            print(item, end=end or "\n")
 
 
 class Progress(Renderable):
@@ -123,10 +133,15 @@ class Progress(Renderable):
 
         return self.bounds[0] + filled + void + self.bounds[1]
 
-    def advance(self, amount):
+    def advance(self, amount: Number):
         """Update the position of the bar"""
 
-        self.pos += amount
+        self.to(self.pos + amount)
+
+    def to(self, position: Number):
+        """Set the bar to a specific position"""
+
+        self.pos = position
         self.console.print(self)
 
     def render(self):
