@@ -10,7 +10,8 @@ from haku.raw.fs import FTree
 from haku.shelf import Shelf
 from haku.ui.cli.common import rich_fetch
 from haku.utils import tmpdir
-from haku.utils.cli import Console, Progress
+from haku.utils.cli import Console
+from haku.utils.cli.progress import Progress
 
 
 def dl_progress(
@@ -30,7 +31,7 @@ def dl_progress(
     ) as bar:
 
         downloader = Downloader(scraper, shelf, path)
-        downloader.endpoints.on("page.end", lambda *_: bar.advance(1))
+        downloader.endpoints.on("page.end", lambda *_: bar(1))
 
         return downloader.download(Method.batch(batch_size), rate_limit=rate_limit)
 

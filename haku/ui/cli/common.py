@@ -3,7 +3,8 @@ from typing import Union
 from haku.meta import Manga
 from haku.provider import Scraper, route
 from haku.shelf import Filter, Shelf, StringifiedFilter
-from haku.utils.cli import Console, Loader
+from haku.utils.cli import Console
+from haku.utils.cli.progress import Loader
 
 
 def prepare_manga(
