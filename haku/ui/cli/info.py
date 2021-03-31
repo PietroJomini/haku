@@ -1,54 +1,56 @@
 import click
-from rich import box
-from rich.console import Console as RichConsole
-from rich.console import RenderGroup
-from rich.panel import Panel
-from rich.table import Column, Table
 
 from haku.meta import Manga
 from haku.provider import route
 from haku.ui.cli.common import prepare_manga, rich_fetch
 from haku.utils.cli import Console
+from haku.utils.cli.renderable import Text
+from haku.utils.cli.table import Table
 
 
-def rich_info(manga: Manga, show_chapters: bool, show_urls: bool, show_volumes: bool):
+def rich_info(
+    console: Console,
+    manga: Manga,
+    show_chapters: bool,
+    show_urls: bool,
+    show_volumes: bool,
+):
     """Format manga as a rich renderable"""
 
-    meta = [
-        f"Title: [b]{manga.title}[/b]",
-        f"Url: [b]{manga.url}[/b]",
-        f"Cover: [b]{manga.cover}[/b]",
-    ]
+    table = Table()
+    table.add_row(Text("META", expand=True, bold=True))
+
+    meta = [Text("Title"), Text("Url"), Text("Cover")]
+    meta_values = [manga.title, manga.url, manga.cover]
+
+    info = Table()
+    info.add_column(*(meta if show_urls else meta[:-2]), same_width=True)
+    info.add_column(*(meta_values if show_urls else meta_values[:-2]))
+    table += info
 
     columns = [
-        Column("Volume", justify="right"),
-        Column("Index", justify="right"),
-        Column("Title"),
-        Column("Url"),
+        [Text("Volume")],
+        [Text("Index")],
+        [Text("Title", expand=not show_urls)],
+        ["Url"],
     ]
-
-    if not show_urls:
-        meta = meta[:-2]
-
-    meta = Panel.fit("\n".join(meta), box=box.SIMPLE)
-    if not show_chapters:
-        return meta
-
-    chapters = Table(*columns, box=box.MINIMAL)
     for chapter in manga.chapters:
-        chapters.add_row(
-            f"{chapter.volume:g}",
-            f"{chapter.index:g}",
-            chapter.title,
-            chapter.url,
-        )
+        columns[0].append(Text(f"{chapter.volume:g}"))
+        columns[1].append(Text(f"{chapter.index:g}"))
+        columns[2].append(Text(chapter.title, expand=not show_urls))
+        columns[3].append(chapter.url)
 
-    if not show_urls:
-        chapters.columns = chapters.columns[:-1]
-    if not show_volumes:
-        chapters.columns = chapters.columns[1:]
+    table.add_row(Text("CHAPTERS", expand=True, bold=True))
 
-    return RenderGroup(meta, chapters)
+    chapters = Table()
+    if show_volumes:
+        chapters.add_column(*columns[0], same_width=True)
+    chapters.add_column(*columns[1], same_width=True)
+    chapters.add_column(*columns[2], same_width=show_urls)
+    if show_urls:
+        chapters.add_column(*columns[3])
+
+    console.print(table + chapters)
 
 
 @click.command()
@@ -121,8 +123,5 @@ def info(
         print(shelf.manga.yaml(add_chapters=True, add_pages=pages))
         return
 
-    console = Console(columns=100)
-    shelf, _ = rich_fetch(console, url, re, apply_filter, ignore)
-
-    info_panel = Panel(rich_info(shelf.manga, show_chapters, show_urls, show_volumes))
-    RichConsole().print(info_panel)
+    shelf, _ = rich_fetch(Console(columns=100), url, re, apply_filter, ignore)
+    rich_info(Console(), shelf.manga, show_chapters, show_urls, show_volumes)

@@ -1,6 +1,7 @@
 from typing import Callable, List, Optional, Tuple
 
 from haku.utils import abstract
+from haku.utils.cli.chars import SpecialChars
 
 
 class Renderable:
@@ -101,11 +102,15 @@ class Text(Renderable):
         text: str,
         expand: bool = False,
         clip: bool = True,
+        center: bool = False,
+        bold: bool = False,
     ):
         self.text = text
         self.expand = expand
         self.clip = clip
+        self.center = center
         self.width = len(text) if not expand else None
+        self.bold = bold
 
     def render(self, width: int) -> str:
         """Render the text"""
@@ -114,9 +119,10 @@ class Text(Renderable):
             self.text = self.text[: width - 3] + "..."
 
         if self.expand:
-            return Group(
-                Text(self.text),
-                Line(" "),
-            ).render(width)
+            items = [Line(" "), Text(self.text, bold=self.bold), Line(" ")]
+            return Group(*(items if self.center else items[1:])).render(width)
+
+        if self.bold:
+            self.text = f"{SpecialChars.TEXT_BOLD}{self.text}{SpecialChars.TEXT_CLEAR}"
 
         return self.text

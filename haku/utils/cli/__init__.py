@@ -2,14 +2,8 @@ from shutil import get_terminal_size
 from sys import stdout
 from typing import Any, Optional, TextIO, Union
 
+from .chars import SpecialChars
 from .renderable import Renderable, Text
-
-
-class SpecialChars:
-    """Special chars codes"""
-
-    CURSOR_HIDE = "\x1b[?25l"
-    CURSOR_SHOW = "\x1b[?25h"
 
 
 class Console:
