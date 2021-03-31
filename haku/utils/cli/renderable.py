@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Callable, List, Optional, Tuple
 
 from haku.utils import abstract
-from haku.utils.cli.chars import SpecialChars
 
 
 class Flex(Enum):
@@ -10,6 +9,14 @@ class Flex(Enum):
 
     grow = 0
     fixed = 1
+
+
+class Align(Enum):
+    """Align directives"""
+
+    right = 0
+    center = 1
+    left = 2
 
 
 class Renderable:
@@ -135,16 +142,14 @@ class Text(Renderable):
     def __init__(
         self,
         text: str,
-        expand: bool = False,
         clip: bool = True,
-        center: bool = False,
-        bold: bool = False,
+        expand: bool = False,
+        align: Align = Align.left,
     ):
         self.text = text
         self.expand = expand
         self.clip = clip
-        self.center = center
-        self.bold = bold
+        self.align = align
 
         self.width = len(text) if not expand else None
         self.flex = Flex.fixed if not expand else Flex.grow
@@ -155,11 +160,10 @@ class Text(Renderable):
         if self.clip and len(self.text) > width:
             self.text = self.text[: width - 3] + "..."
 
-        if self.expand:
-            items = [Line(" "), Text(self.text, bold=self.bold), Line(" ")]
-            return Group(*(items if self.center else items[1:])).render(width)
+        items_map = {
+            Align.left: Group(Text(self.text), Line(" ")),
+            Align.center: Group(Line(" "), Text(self.text), Line(" ")),
+            Align.right: Group(Line(" "), Text(self.text)),
+        }
 
-        if self.bold:
-            self.text = f"{SpecialChars.TEXT_BOLD}{self.text}{SpecialChars.TEXT_CLEAR}"
-
-        return self.text
+        return items_map[self.align].render(width) if self.expand else self.text
