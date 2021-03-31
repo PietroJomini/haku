@@ -21,7 +21,7 @@ class Renderable:
                 width = w
 
                 def render(self, width: int) -> str:
-                    return cbk(width=width)
+                    return cbk(width)
 
             return R()
 
@@ -32,18 +32,41 @@ class Renderable:
         """Render the item"""
 
 
+class Dummy(Renderable):
+    """Dummy renderable"""
+
+    width = 0
+
+    @staticmethod
+    def render(width: int) -> str:
+        """Render nothing"""
+
+        return ""
+
+
 class Group(Renderable):
     """Renderable group"""
 
-    def __init__(self, *items: Renderable, separator: str = "", flex: bool = True):
+    def __init__(
+        self,
+        *items: Renderable,
+        separator: str = "",
+        flex: bool = True,
+        sandwich: bool = False,
+        width: Optional[int] = None,
+    ):
         self.items = items
         self.separator = separator
         self.flex = flex
+        self.width = width
+
+        if sandwich:
+            self.items = [Dummy, *self.items, Dummy]
 
         self.fw_items = [item for item in items if item.width is not None]
         self.uw_items = [item for item in items if item.width is None]
         self.fw = sum([item.width for item in self.fw_items])
-        self.sw = len(separator) * (len(items) - 1)
+        self.sw = len(separator) * (len(items) - 1 + 2 * sandwich)
 
     def apply_flex(
         self, items: List[Tuple[Renderable, int]], missing: int

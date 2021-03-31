@@ -18,7 +18,7 @@ def rich_info(
     """Format manga as a rich renderable"""
 
     table = Table()
-    table.add_row(Text("META", expand=True, bold=True))
+    table.add_row(Text("META", expand=True))
 
     meta = [Text("Title"), Text("Url"), Text("Cover")]
     meta_values = [manga.title, manga.url, manga.cover]
@@ -40,7 +40,7 @@ def rich_info(
         columns[2].append(Text(chapter.title, expand=not show_urls))
         columns[3].append(chapter.url)
 
-    table.add_row(Text("CHAPTERS", expand=True, bold=True))
+    table.add_row(Text("CHAPTERS", expand=True))
 
     chapters = Table()
     if show_volumes:
