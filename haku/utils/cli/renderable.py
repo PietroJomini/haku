@@ -73,7 +73,7 @@ class Group(Renderable):
             missing_columns = width - sum([w for _, w in items]) - self.sw
             items = self.apply_flex(items, missing_columns)
 
-        rendered = [item.render(width=width) for item, width in items]
+        rendered = [item.render(width) for item, width in items]
         return self.separator.join(rendered)
 
 
@@ -96,11 +96,27 @@ class Line(Renderable):
 class Text(Renderable):
     """Renderable text"""
 
-    def __init__(self, text: str):
+    def __init__(
+        self,
+        text: str,
+        expand: bool = False,
+        clip: bool = True,
+    ):
         self.text = text
-        self.width = len(text)
+        self.expand = expand
+        self.clip = clip
+        self.width = len(text) if not expand else None
 
     def render(self, width: int) -> str:
         """Render the text"""
+
+        if self.clip and len(self.text) > width:
+            self.text = self.text[: width - 3] + "..."
+
+        if self.expand:
+            return Group(
+                Text(self.text),
+                Line(" "),
+            ).render(width)
 
         return self.text
