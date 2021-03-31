@@ -4,13 +4,14 @@ from time import sleep
 from typing import Optional, Tuple
 
 from haku.utils.cli import Console
-from haku.utils.cli.renderable import Group, Line, Renderable, Text
+from haku.utils.cli.renderable import Flex, Group, Line, Renderable, Text
 
 
 class Progress(Renderable):
     """Progress bar"""
 
     end = "\r"
+    flex: Flex.grow
 
     def __init__(
         self,
@@ -88,6 +89,7 @@ class Loader(Progress):
     """loader spinner"""
 
     end = "\r"
+    flex: Flex.grow
 
     def __init__(
         self,

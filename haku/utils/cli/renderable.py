@@ -1,7 +1,15 @@
+from enum import Enum
 from typing import Callable, List, Optional, Tuple
 
 from haku.utils import abstract
 from haku.utils.cli.chars import SpecialChars
+
+
+class Flex(Enum):
+    """Flex directives"""
+
+    grow = 0
+    fixed = 1
 
 
 class Renderable:
@@ -9,6 +17,7 @@ class Renderable:
 
     end: str = "\n"
     width: Optional[int] = None
+    flex: Flex = Flex.fixed
 
     @staticmethod
     def from_function(w: Optional[int] = None):
@@ -18,11 +27,11 @@ class Renderable:
             """Internal decorator"""
 
             class R(Renderable):
-                width = w
-
                 def render(self, width: int) -> str:
                     return cbk(width)
 
+            R.width = w
+            R.flex = Flex.fixed if w is not None else Flex.grow
             return R()
 
         return decorator
@@ -51,52 +60,54 @@ class Group(Renderable):
         self,
         *items: Renderable,
         separator: str = "",
-        flex: bool = True,
         sandwich: bool = False,
         width: Optional[int] = None,
+        fix_flex: bool = True,
     ):
         self.items = items
         self.separator = separator
-        self.flex = flex
         self.width = width
+        self.sandwich = sandwich
+        self.fix_flex = fix_flex
 
-        if sandwich:
+        if self.sandwich:
             self.items = [Dummy, *self.items, Dummy]
 
-        self.fw_items = [item for item in items if item.width is not None]
-        self.uw_items = [item for item in items if item.width is None]
-        self.fw = sum([item.width for item in self.fw_items])
-        self.sw = len(separator) * (len(items) - 1 + 2 * sandwich)
-
-    def apply_flex(
-        self, items: List[Tuple[Renderable, int]], missing: int
-    ) -> List[Tuple[Renderable, int]]:
+    def flex(self, width: int) -> List[Tuple[Renderable, int]]:
         """Add missing width to items"""
 
-        fixed_items = []
+        fixed_items = [item for item in self.items if item.flex == Flex.fixed]
+        grow_items = [item for item in self.items if item.flex == Flex.grow]
 
-        augmented_items = 0
-        for item, width in items:
-            if item.width is None and augmented_items < missing:
-                fixed_items.append((item, width + 1))
-                augmented_items += 1
-            else:
-                fixed_items.append((item, width))
+        fix_width = sum([item.width for item in fixed_items])
+        sep_width = len(self.separator) * (len(self.items) - 1)
+        rem_width = width - fix_width - sep_width
 
-        return fixed_items
+        # calcualte the width of each item marked as growable
+        growth = rem_width // len(grow_items) if len(grow_items) > 0 else 0
+
+        # if "holes" remains due to the "low resolution" of the console,
+        # repeatly apply fixtures until the holes are (mostly) evenly filled
+        # between the items marked as Flex.grow
+        diff = rem_width % len(grow_items) if len(grow_items) > 0 else 0
+        fixtures = [0 for _ in self.items]
+
+        if diff > 0 and self.fix_flex:
+            for i in range(diff):
+                fixtures[i % len(fixtures)] += 1
+
+        fixtures = iter(fixtures)
+        items = [
+            (item, item.width if item.flex == Flex.fixed else growth + next(fixtures))
+            for item in self.items
+        ]
+
+        return items
 
     def render(self, width: int):
         """Render the group"""
 
-        rem = width - self.fw - self.sw
-        uw = rem // len(self.uw_items) if len(self.uw_items) != 0 else 0
-
-        items = [(i, uw if i.width is None else i.width) for i in self.items]
-
-        if self.flex:
-            missing_columns = width - sum([w for _, w in items]) - self.sw
-            items = self.apply_flex(items, missing_columns)
-
+        items = self.flex(width)
         rendered = [item.render(width) for item, width in items]
         return self.separator.join(rendered)
 
@@ -105,6 +116,7 @@ class Line(Renderable):
     """Renderable line"""
 
     def __init__(self, pattern: str, width: Optional[int] = None):
+        self.flex = Flex.grow if width is None else Flex.fixed
         self.pattern = pattern
         self.width = width
 
@@ -132,8 +144,10 @@ class Text(Renderable):
         self.expand = expand
         self.clip = clip
         self.center = center
-        self.width = len(text) if not expand else None
         self.bold = bold
+
+        self.width = len(text) if not expand else None
+        self.flex = Flex.fixed if not expand else Flex.grow
 
     def render(self, width: int) -> str:
         """Render the text"""
