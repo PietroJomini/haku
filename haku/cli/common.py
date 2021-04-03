@@ -14,7 +14,7 @@ def prepare_manga(
     ignore: str,
     pages: bool,
 ) -> Shelf:
-    """Prepare th emanga with a shelf"""
+    """Prepare the manga with a shelf"""
 
     filters = Filter.true() if filters is None else StringifiedFilter.parse(filters)
     ignore = Filter.false() if ignore is None else StringifiedFilter.parse(ignore)

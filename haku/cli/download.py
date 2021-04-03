@@ -3,12 +3,12 @@ from pathlib import Path
 
 import click
 
+from haku.cli.common import rich_fetch
 from haku.export.pdf import Pdf
 from haku.provider import Scraper
 from haku.raw.downloader import Downloader, Method
 from haku.raw.fs import FTree
 from haku.shelf import Shelf
-from haku.ui.cli.common import rich_fetch
 from haku.utils import tmpdir
 from haku.utils.cli import Console
 from haku.utils.cli.progress import Progress

@@ -1,4 +1,4 @@
-from haku.ui.cli import main
+from haku.cli import main
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,8 @@
 import click
 
+from haku.cli.common import prepare_manga, rich_fetch
 from haku.meta import Manga
 from haku.provider import route
-from haku.ui.cli.common import prepare_manga, rich_fetch
 from haku.utils.cli import Console
 from haku.utils.cli.renderable import Text
 from haku.utils.cli.table import Table
