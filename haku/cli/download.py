@@ -41,6 +41,7 @@ def to_pdf(
     src: FTree,
     shelf: Shelf,
     destination: str,
+    merge: bool,
 ):
     """Convert to pdf"""
 
@@ -59,7 +60,13 @@ def to_pdf(
             bar.to(shared_dict["tot"])
 
         out_tree = FTree(destination, shelf.manga)
-        pdf = Pdf(shelf, src, out_tree)
+        pdf = Pdf(
+            shelf,
+            src,
+            out_tree if not merge else src,
+            merge,
+            out_tree.root.parent,
+        )
         pdf.on("chapter.end", update)
         pdf.convert()
 
@@ -81,6 +88,12 @@ def to_pdf(
     type=click.Choice(["RAW", "PDF"], case_sensitive=False),
     help="Output format",
     show_default=True,
+)
+@click.option(
+    "-m",
+    "--merge",
+    is_flag=True,
+    help="On formats that supports it, merge chapters",
 )
 @click.option(
     "-s",
@@ -119,6 +132,7 @@ def download(
     url: str,
     path: str,
     out: str,
+    merge: bool,
     batch_size: int,
     rate_limit: int,
     apply_filter: str,
@@ -134,10 +148,10 @@ def download(
         console,
         shelf,
         scraper,
-        tmpdir() if out != "RAW" else path,
+        tmpdir() if out != "RAW" or merge else path,
         batch_size,
         rate_limit,
     )
 
     if out == "PDF":
-        to_pdf(console, tree, shelf, path)
+        to_pdf(console, tree, shelf, path, merge)

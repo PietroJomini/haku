@@ -28,29 +28,33 @@ def rich_info(
     info.add_column(*(meta_values if show_urls else meta_values[:-2]))
     table += info
 
-    columns = [
-        [Text("Volume")],
-        [Text("Index")],
-        [Text("Title", expand=not show_urls)],
-        ["Url"],
-    ]
-    for chapter in manga.chapters:
-        columns[0].append(Text(f"{chapter.volume:g}"))
-        columns[1].append(Text(f"{chapter.index:g}"))
-        columns[2].append(Text(chapter.title, expand=not show_urls))
-        columns[3].append(chapter.url)
+    if show_chapters:
 
-    table.add_row(Text("CHAPTERS", expand=True))
+        columns = [
+            [Text("Volume")],
+            [Text("Index")],
+            [Text("Title", expand=not show_urls)],
+            ["Url"],
+        ]
+        for chapter in manga.chapters:
+            columns[0].append(Text(f"{chapter.volume:g}"))
+            columns[1].append(Text(f"{chapter.index:g}"))
+            columns[2].append(Text(chapter.title, expand=not show_urls))
+            columns[3].append(chapter.url)
 
-    chapters = Table()
-    if show_volumes:
-        chapters.add_column(*columns[0], same_width=True)
-    chapters.add_column(*columns[1], same_width=True)
-    chapters.add_column(*columns[2], same_width=show_urls)
-    if show_urls:
-        chapters.add_column(*columns[3])
+        table.add_row(Text("CHAPTERS", expand=True))
 
-    console.print(table + chapters)
+        chapters = Table()
+        if show_volumes:
+            chapters.add_column(*columns[0], same_width=True)
+        chapters.add_column(*columns[1], same_width=True)
+        chapters.add_column(*columns[2], same_width=show_urls)
+        if show_urls:
+            chapters.add_column(*columns[3])
+
+        table = table + chapters
+
+    console.print(table)
 
 
 @click.command()

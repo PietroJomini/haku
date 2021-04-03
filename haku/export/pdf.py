@@ -5,8 +5,9 @@ from PIL import Image, ImageFile
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 from haku.export import Converter
-from haku.meta import Chapter, Page
-from haku.raw.fs import FTree
+from haku.meta import Chapter, Manga, Page
+from haku.raw.fs import FTree, Reader
+from haku.shelf import Shelf
 
 # fix truncated images error
 # https://stackoverflow.com/questions/12984426/python-pil-ioerror-image-file-truncated-with-big-images
@@ -18,12 +19,13 @@ class Pdf(Converter):
 
     def __init__(
         self,
-        *args,
+        manga: Union[Manga, Shelf],
+        reader: Union[Reader, FTree],
+        out: Union[FTree, Path],
         merge: bool = False,
         merge_out: Optional[Union[FTree, Path]] = None,
-        **argv,
     ):
-        super().__init__(*args, **argv)
+        super().__init__(manga, reader, out)
 
         self.merge = merge
         self.m_out = merge_out or self.out
