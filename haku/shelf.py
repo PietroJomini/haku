@@ -1,13 +1,19 @@
 import re
 from functools import reduce
 from numbers import Number
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from haku.meta import Chapter, Manga
 
 
 class Filter:
     """Filters, to be applied to a Shelf instance"""
+
+    @staticmethod
+    def stringified(src: str):
+        """Parse stringified filter"""
+
+        return StringifiedFilter.parse(src)
 
     @staticmethod
     def true():
@@ -219,3 +225,13 @@ class Shelf:
 
         self.manga.chapters.sort(key=lambda chapter: (chapter.index, chapter.volume))
         return self
+
+    def split_volumes(self) -> Dict[Number, List[Chapter]]:
+        """Split manga into volumes"""
+
+        volumes = {chapter.volume: [] for chapter in self.manga.chapters}
+
+        for chapter in self.manga.chapters:
+            volumes[chapter.volume].append(chapter)
+
+        return volumes
