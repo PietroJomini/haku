@@ -66,6 +66,8 @@ class Pdf(Converter):
             partial = PdfFileReader(str(path), "rb")
             merger.append(partial)
 
+        self.m_out.mkdir(parents=True, exist_ok=True)
         out = self.m_out / f"{self.manga.title}.pdf"
+
         with out.open("wb") as stream:
             merger.write(stream)

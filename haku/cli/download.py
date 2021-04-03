@@ -5,6 +5,7 @@ import click
 
 from haku.cli.common import rich_fetch
 from haku.export.pdf import Pdf
+from haku.meta import Manga
 from haku.provider import Scraper
 from haku.raw.downloader import Downloader, Method
 from haku.raw.fs import FTree
@@ -71,6 +72,39 @@ def to_pdf(
         pdf.convert()
 
 
+def to_pdf_volumes(
+    console: Console,
+    src: FTree,
+    shelf: Shelf,
+    destination: str,
+    _: bool,
+):
+    """Convert to pdf"""
+
+    with Progress(
+        console,
+        len(shelf.manga.chapters),
+        "Converting...",
+    ) as bar:
+
+        manager = Manager()
+        shared_dict = manager.dict()
+        shared_dict["tot"] = 0
+
+        def update(c):
+            shared_dict["tot"] += 1
+            bar.to(shared_dict["tot"])
+
+        out_tree = FTree(destination, shelf.manga)
+        volumes = shelf.split_volumes()
+
+        for volume in volumes:
+            manga = Manga("", f"{volume:g}", None, volumes[volume])
+            pdf = Pdf(manga, src, src, True, out_tree)
+            pdf.on("chapter.end", update)
+            pdf.convert()
+
+
 @click.command()
 @click.argument("url")
 @click.option(
@@ -94,6 +128,11 @@ def to_pdf(
     "--merge",
     is_flag=True,
     help="On formats that supports it, merge chapters",
+)
+@click.option(
+    "--split-volumes",
+    is_flag=True,
+    help="On formats that supports it, merge chapters in volumes",
 )
 @click.option(
     "-s",
@@ -133,6 +172,7 @@ def download(
     path: str,
     out: str,
     merge: bool,
+    split_volumes: bool,
     batch_size: int,
     rate_limit: int,
     apply_filter: str,
@@ -154,4 +194,5 @@ def download(
     )
 
     if out == "PDF":
-        to_pdf(console, tree, shelf, path, merge)
+        f = to_pdf_volumes if split_volumes else to_pdf
+        f(console, tree, shelf, path, merge)
