@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional
 
 import yaml
@@ -14,7 +14,7 @@ class Page:
     def as_dict(self) -> Dict:
         """Serialize into a `dict`"""
 
-        return dict(url=self.url, index=self.index)
+        return asdict(self)
 
     @staticmethod
     def from_dict(src: Dict):
@@ -37,19 +37,12 @@ class Chapter:
     def as_dict(self, add_pages: bool = True) -> Dict:
         """Serialize into a `dict`"""
 
-        pages = (
-            [page.as_dict() for page in self.pages]
-            if add_pages and self.pages is not None
-            else None
-        )
+        dictified = asdict(self)
 
-        return dict(
-            url=self.url,
-            title=self.title,
-            index=self.index,
-            volume=self.volume,
-            pages=pages,
-        )
+        if not add_pages:
+            del dictified["pages"]
+
+        return dictified
 
     @staticmethod
     def from_dict(src: Dict):
@@ -83,18 +76,14 @@ class Manga:
     def as_dict(self, add_chapters: bool = True, add_pages: bool = True) -> Dict:
         """Serialize into a `dict`"""
 
-        chapters = (
-            [chapter.as_dict(add_pages) for chapter in self.chapters]
-            if add_chapters and self.chapters is not None
-            else None
-        )
+        dictified = asdict(self)
 
-        return dict(
-            url=self.url,
-            title=self.title,
-            cover=self.cover,
-            chapters=chapters,
-        )
+        if add_chapters:
+            dictified["chapters"] = [c.as_dict(add_pages) for c in self.chapters]
+        else:
+            del dictified["chapters"]
+
+        return dictified
 
     def yaml(
         self,
@@ -103,7 +92,8 @@ class Manga:
     ) -> str:
         """Serialize as json"""
 
-        return yaml.dump(self.as_dict(add_chapters, add_pages))
+        dictified = self.as_dict(add_chapters, add_pages)
+        return yaml.dump(dictified)
 
     @staticmethod
     def from_dict(src: Dict):
