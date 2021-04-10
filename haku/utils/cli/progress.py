@@ -67,7 +67,13 @@ class Progress(Renderable):
     def render(self, width: int) -> str:
         """Render the bar"""
 
-        items = [self.description, self.bar, Text(f"{int(self.percent*100):3g}%")]
+        items = [
+            self.description,
+            self.bar,
+            Text(f"{int(self.percent*100):3g}%"),
+            Text(f"{self.bounds[0]}{self.position}/{self.tot}{self.bounds[1]}"),
+        ]
+
         items = items[1:] if self.description is None else items
         return Group(*items, separator=" ").render(width)
 
