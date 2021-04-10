@@ -87,14 +87,12 @@ def display_info(console: Console, shelf: Shelf, show_chapters: bool):
             [Text("Index")],
             [Text("Title")],
             [Text("Url", expand=True)],
-            [Text("Pages")],
         ]
         for chapter in manga.chapters:
             columns[0].append(Text(f"{chapter.volume:g}"))
             columns[1].append(Text(f"{chapter.index:g}"))
             columns[2].append(Text(chapter.title))
             columns[3].append(chapter.url)
-            columns[4].append(Text(f"{len(chapter.pages)}"))
 
         table.add_row(Text("CHAPTERS", expand=True, align=Align.center))
 
@@ -103,7 +101,6 @@ def display_info(console: Console, shelf: Shelf, show_chapters: bool):
         chapters.add_column(*columns[1], same_width=True)
         chapters.add_column(*columns[2], same_width=True)
         chapters.add_column(*columns[3])
-        chapters.add_column(*columns[4], same_width=True)
 
         table = table + chapters
 
