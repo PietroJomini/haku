@@ -157,10 +157,16 @@ def convert_pdf(
         shared_dict["tot"] = 0
 
         def update(c):
-            shared_dict["tot"] += 1
-            bar.to(shared_dict["tot"])
+            if c.title not in shared_dict:
+                shared_dict["tot"] += 1
+                bar.to(shared_dict["tot"])
+
+            shared_dict[c.title] = 0
 
         # TODO(me) move the splitting process to FTree
+        # TODO(me) investigate progress overflow
+        # TODO(me) use the same process pool for each chunk
+        #          -> two pools, one that convert and one that merge?
         merge_tree = FTree(destination, shelf.manga)
         destination = destination if merge is None else src
 
