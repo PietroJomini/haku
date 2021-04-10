@@ -31,6 +31,7 @@ class ManganeloCom(Provider):
     name = "manganelo.com"
     pattern = r"^https://manganelo.com"
     endpoints = ManganeloEndpoints
+    force_fetch = True
 
     re_chapter_title = (
         r"(?:Vol.(?P<volume>(.*)) )?Chapter (?P<index>[^\n:]*)(?:: *(?P<title>.*))?"

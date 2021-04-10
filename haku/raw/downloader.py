@@ -5,7 +5,7 @@ from typing import Callable, Optional, Union
 import aiohttp
 
 from haku.meta import Manga, Page
-from haku.provider import Provider
+from haku.provider import Scraper
 from haku.raw.endpoints import Endpoints
 from haku.raw.fs import FTree
 from haku.shelf import Shelf
@@ -38,7 +38,7 @@ class Downloader:
 
     def __init__(
         self,
-        endpoints: Union[Endpoints, Provider],
+        endpoints: Union[Endpoints, Scraper],
         manga: Union[Manga, Shelf],
         root: Optional[Union[Path, FTree]] = tmpdir(),
     ):

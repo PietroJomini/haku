@@ -3,7 +3,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import IO, Any, Callable, Optional, Union
+from typing import IO, Any, Callable, List, Optional, Union
 
 from PIL import Image
 
@@ -78,3 +78,29 @@ def safe_path(
     unsafe_chars = unsafe_chars or os.sep
     path = re.sub(unsafe_chars, replacement, str(path))
     return Path(path)
+
+
+def get_editor(candidates: List[str] = ["vim", "emacs", "nano"]) -> str:
+    """Get editor"""
+
+    for candidate in candidates:
+        if shutil.which(candidate) is not None:
+            return candidate
+
+    return None
+
+
+# from https://github.com/fmoo/python-editor/blob/master/editor.py
+def get_editor_args(editor: str) -> List[str]:
+    """Get recommended editor flags"""
+
+    if editor in ["vim"]:
+        return ["-f", "-o"]
+    elif editor in ["emacs"]:
+        return ["-nw"]
+    elif editor in ["nano"]:
+        return ["-R"]
+    elif editor in ["code", "codium"]:
+        return ["-w", "-n"]
+
+    return []

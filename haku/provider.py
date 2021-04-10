@@ -73,6 +73,9 @@ class Provider:
     enabled: bool = True
     endpoints: Type[Endpoints] = Endpoints
 
+    # used on the cli. If True, fetch also when reading from .haku
+    force_fetch: bool = False
+
     re_chapter_title: str = r""
 
     def __init__(self):

@@ -20,6 +20,9 @@ class Console:
         self.columns = columns or self.real_size.columns
         self.lines = lines or self.real_size.lines
 
+        self.columns = min(self.columns, self.real_size.columns)
+        self.lines = min(self.lines, self.real_size.lines)
+
         self.cursor_hidden = False
 
     def hide_cursor(self):
