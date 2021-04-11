@@ -6,6 +6,7 @@ import click
 import cloup
 
 from haku.cli.controllers import (
+    cc,
     convert_pdf,
     display_info,
     download,
@@ -23,7 +24,7 @@ C_WIDTH = 100
 
 
 @cloup.command(context_settings=CONTEXT_SETTINGS)
-@click.argument("url")
+@click.argument("url", required=False)
 @cloup.option_group(
     "Basic usage",
     cloup.option(
@@ -63,18 +64,15 @@ C_WIDTH = 100
     cloup.option("--batch-size", type=int, default=100, show_default=True),
     cloup.option("--rate-limit", type=int, default=100, show_default=True),
 )
-@cloup.option_group(
-    "Editor",
-    cloup.option(
-        "-E",
-        "--editor",
-        type=EditorType(),
-        default=lambda: os.environ.get("EDITOR", ""),
-        show_default="$EDITOR",
-    ),
+@cloup.option(
+    "--editor",
+    type=EditorType(),
+    default=lambda: os.environ.get("EDITOR", ""),
+    show_default="$EDITOR",
 )
+@cloup.option("--clear-cache", is_flag=True)
 def main(
-    url: str,
+    url: Optional[str],
     out: str,
     convert: Optional[str],
     merge: Optional[str],
@@ -89,31 +87,39 @@ def main(
     editor: str,
     show_chapters: bool,
     override_volumes: str,
+    clear_cache: bool,
 ):
     """Haku cli"""
 
-    out = Path(out)
-    shelf, scraper = fetch(Console(columns=C_WIDTH), url, re, filters, ignore, not info)
+    if url is not None:
 
-    shelf.override_volumes(override_volumes)
-    shelf = shelf if yes else update(shelf, editor)
+        out = Path(out)
+        shelf, scraper = fetch(
+            Console(columns=C_WIDTH), url, re, filters, ignore, not info
+        )
 
-    if info:
-        display_info(Console(), shelf, show_chapters)
-        return
+        shelf.override_volumes(override_volumes)
+        shelf = shelf if yes else update(shelf, editor)
 
-    if export:
-        export_dotfile(out, shelf)
-        return
+        if info:
+            display_info(Console(), shelf, show_chapters)
+            return
 
-    tree = download(
-        Console(columns=C_WIDTH),
-        out if convert is None else tmpdir(),
-        shelf,
-        scraper,
-        batch_size,
-        rate_limit,
-    )
+        if export:
+            export_dotfile(out, shelf)
+            return
 
-    if convert == "pdf":
-        convert_pdf(Console(columns=C_WIDTH), tree, shelf, out, merge)
+        tree = download(
+            Console(columns=C_WIDTH),
+            out if convert is None else tmpdir(),
+            shelf,
+            scraper,
+            batch_size,
+            rate_limit,
+        )
+
+        if convert == "pdf":
+            convert_pdf(Console(columns=C_WIDTH), tree, shelf, out, merge)
+
+    if clear_cache:
+        cc(Console(columns=C_WIDTH))

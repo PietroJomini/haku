@@ -12,6 +12,7 @@ from haku.provider import Scraper, route
 from haku.raw.downloader import Downloader, Method
 from haku.raw.fs import Dotman, FTree, Reader
 from haku.shelf import Filter, Shelf
+from haku.utils import cleanup_folder, tmpdir
 from haku.utils.cli import Console
 from haku.utils.cli.progress import Loader, Progress
 from haku.utils.cli.renderable import Align, Text
@@ -149,6 +150,8 @@ def convert_pdf(
 ):
     """Convert to pdf"""
 
+    pdf = Pdf(shelf.manga, src, destination if merge is None else src)
+
     with Progress(
         console,
         len(shelf.manga.chapters),
@@ -166,10 +169,19 @@ def convert_pdf(
 
             shared_dict[c.index] = True
 
-        pdf = Pdf(shelf.manga, src, destination if merge is None else src)
         pdf.on("chapter.end", update)
         pdf.convert()
 
-        if merge is not None:
+    if merge is not None:
+        with Loader(console, "Merging..."):
             merge = {"volume": Merge.volume, "manga": Merge.manga}[merge]
             pdf.merge(merge(), destination)
+
+
+def cc(console: Console):
+    """Clear chache"""
+
+    with Loader(console, "Cleaning cache..."):
+        cache = tmpdir()
+        cache.mkdir(parents=True, exist_ok=True)
+        cleanup_folder(cache)
