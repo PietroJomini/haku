@@ -5,6 +5,7 @@ from typing import Optional, Pattern, Tuple
 import click
 
 from haku.exceptions import NoProviderFound
+from haku.export import Merge
 from haku.export.pdf import Pdf
 from haku.meta import Manga
 from haku.provider import Scraper, route
@@ -159,30 +160,16 @@ def convert_pdf(
         shared_dict["tot"] = 0
 
         def update(c):
-            if c.title not in shared_dict:
+            if c.index not in shared_dict:
                 shared_dict["tot"] += 1
                 bar.to(shared_dict["tot"])
 
-            shared_dict[c.title] = 0
+            shared_dict[c.index] = True
 
-        # TODO(me) move the splitting process to FTree
-        # TODO(me) investigate progress overflow
-        # TODO(me) use the same process pool for each chunk
-        #          -> two pools, one that convert and one that merge?
-        merge_tree = FTree(destination, shelf.manga)
-        destination = destination if merge is None else src
+        pdf = Pdf(shelf.manga, src, destination if merge is None else src)
+        pdf.on("chapter.end", update)
+        pdf.convert()
 
-        if merge == "volume":
-            volumes = shelf.split_volumes()
-            chunks = [(volumes[volume], f"{volume:g}", True) for volume in volumes]
-        elif merge == "manga":
-            chunks = [(shelf.manga.chapters, shelf.manga.title, True)]
-            merge_tree.root = merge_tree.root.parent
-        else:
-            chunks = [(shelf.manga.chapters, shelf.manga.title, False)]
-
-        for chapters, title, merge in chunks:
-            manga = Manga("", title, None, chapters)
-            pdf = Pdf(manga, src, destination, merge, merge_tree)
-            pdf.on("chapter.end", update)
-            pdf.convert()
+        if merge is not None:
+            merge = {"volume": Merge.volume, "manga": Merge.manga}[merge]
+            pdf.merge(merge(), destination)
