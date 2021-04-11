@@ -24,11 +24,8 @@ class Merge:
 
         def method(chapters, manga):
 
-            volumes = {}
+            volumes = {chapter.volume: [] for chapter, _ in chapters}
             for chapter, data in chapters:
-                if chapter.volume not in volumes:
-                    volumes[chapter.volume] = []
-
                 volumes[chapter.volume].append((chapter, data))
 
             return [(volumes[volume], f"{volume:g}") for volume in volumes]
