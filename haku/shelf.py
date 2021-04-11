@@ -132,6 +132,11 @@ class Filter:
 
         return f"Filter[{self.repr}]" if self.repr is not None else super().__repr__()
 
+    def __call__(self, chapter: Chapter) -> bool:
+        """Call  the filter"""
+
+        return self.f(chapter)
+
 
 class StringifiedFilter:
     """Stringified filters parser
@@ -217,7 +222,7 @@ class Shelf:
     def filter(self, f: Filter):
         """Apply a filter"""
 
-        self.manga.chapters = list(filter(f.f, self.manga.chapters))
+        self.manga.chapters = list(filter(f, self.manga.chapters))
         return self
 
     def sort(self):
@@ -235,3 +240,24 @@ class Shelf:
             volumes[chapter.volume].append(chapter)
 
         return volumes
+
+    def override_volumes(self, mod: str):
+        """Override volumes. Takes a `mod` argument formatted as `v{[a]:[b]}`
+        and override the chapters with index from `a` to `b` with the volume `v`.
+
+        `a` is defaulted to `0` and `b` is defaulted to `len(chapters)`.
+        """
+
+        mapping_re = r"([\d\.]+){([\d\.]+)?:([\d\.]+)?}"
+        for match in re.finditer(mapping_re, mod):
+
+            volume = float(match.group(1))
+            start = float(match.group(2) or 0)
+            end = float(match.group(3) or len(self.manga.chapters))
+
+            print(start, end)
+
+            chapter_filter = Filter.index_range(start, end)
+            for chapter in self.manga.chapters:
+                if chapter_filter(chapter):
+                    chapter.volume = volume

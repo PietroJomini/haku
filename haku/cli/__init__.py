@@ -55,6 +55,7 @@ C_WIDTH = 100
     "Filters",
     cloup.option("-f", "--filter", "filters", type=FilterType()),
     cloup.option("--ignore", type=FilterType()),
+    cloup.option("-v", "--override-volumes", default=""),
 )
 @cloup.option_group(
     "Fetch / Download",
@@ -87,11 +88,14 @@ def main(
     rate_limit: int,
     editor: str,
     show_chapters: bool,
+    override_volumes: str,
 ):
     """Haku cli"""
 
     out = Path(out)
     shelf, scraper = fetch(Console(columns=C_WIDTH), url, re, filters, ignore, not info)
+
+    shelf.override_volumes(override_volumes)
     shelf = shelf if yes else update(shelf, editor)
 
     if info:
