@@ -89,9 +89,11 @@ def display_info(console: Console, shelf: Shelf, show_chapters: bool):
             [Text("Url", expand=True)],
         ]
         for chapter in manga.chapters:
-            columns[0].append(Text(f"{chapter.volume:g}"))
+            columns[0].append(
+                Text(f"{chapter.volume:g}" if chapter.volume is not None else "")
+            )
             columns[1].append(Text(f"{chapter.index:g}"))
-            columns[2].append(Text(chapter.title))
+            columns[2].append(Text(chapter.title or ""))
             columns[3].append(chapter.url)
 
         table.add_row(Text("CHAPTERS", expand=True, align=Align.center))

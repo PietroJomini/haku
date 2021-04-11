@@ -255,8 +255,6 @@ class Shelf:
             start = float(match.group(2) or 0)
             end = float(match.group(3) or len(self.manga.chapters))
 
-            print(start, end)
-
             chapter_filter = Filter.index_range(start, end)
             for chapter in self.manga.chapters:
                 if chapter_filter(chapter):
