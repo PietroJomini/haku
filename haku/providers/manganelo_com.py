@@ -29,7 +29,7 @@ class ManganeloCom(Provider):
     """Manganelo.com provider"""
 
     name = "manganelo.com"
-    pattern = r"^https://manganelo.com"
+    pattern = r"^https://readmanganato.com"
     endpoints = ManganeloEndpoints
     force_fetch = True
 
