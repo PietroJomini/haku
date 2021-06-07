@@ -40,6 +40,7 @@ def fetch(
         # fetch from url
         try:
             scraper = route(url)
+            scraper.provider.re_chapter_title = re or scraper.provider.re_chapter_title
             shelf = scraper.fetch_sync(merged_filters, fetch_pages=pages)
             return shelf, scraper
         except NoProviderFound:
