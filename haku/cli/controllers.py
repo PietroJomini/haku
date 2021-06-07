@@ -111,10 +111,10 @@ def display_info(console: Console, shelf: Shelf, show_chapters: bool):
     console.print(table)
 
 
-def export_dotfile(out: Path, shelf: Shelf):
+def export_dotfile(out: Path, shelf: Shelf, name: bool = True):
     """Export .haku file to out"""
 
-    manager = Dotman(out, name=f"{shelf.manga.title}.haku")
+    manager = Dotman(out, name=f"{shelf.manga.title}.haku" if name else ".haku")
     manager.dump(shelf.manga)
 
 
@@ -176,6 +176,9 @@ def convert_pdf(
         with Loader(console, "Merging..."):
             merge = {"volume": Merge.volume, "manga": Merge.manga}[merge]
             pdf.merge(merge(), destination)
+
+    # TODO(me) move to Converter
+    export_dotfile(destination / shelf.manga.title, shelf, False)
 
 
 def cc(console: Console):
